@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PURITY – Nanbenda Barters LLC</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Public+Sans:wght@600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "primary": "#154212", "primary-container": "#2d5a27",
+        "secondary": "#7e562e", "background": "#fbf9f8",
+        "outline-variant": "#c2c9bb", "outline": "#72796e",
+        "on-surface": "#1b1c1c", "error": "#ba1a1a",
+      },
+      fontFamily: { manrope: ["Manrope"], inter: ["Inter"], "public-sans": ["Public Sans"] },
+    }
+  }
+};
+</script>
+<style>
+  *{box-sizing:border-box}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+  .fill-icon{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  body{min-height:100dvh;background:#fbf9f8;font-family:'Inter',sans-serif;color:#1b1c1c}
+  .nav-active{background:#2d5a27!important;color:#fff!important;font-weight:700;box-shadow:0 2px 8px rgba(21,66,18,.18)}
+  .nav-active .material-symbols-outlined{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+  .page{display:none}.page.active{display:block}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#2d5a27!important;box-shadow:0 0 0 2px rgba(45,90,39,.15)}
+  .stat-card{background:#fff;border:1px solid #c2c9bb;border-radius:.75rem}
+  .tr-even{background:#f5f3f3}
+  .chip-green{background:#bcf0ae;color:#154212}
+  .chip-amber{background:#ffdcbf;color:#7e562e}
+  .chip-red{background:#ffdad6;color:#ba1a1a}
+  .chip-grey{background:#e4e2e2;color:#42493e}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .fade-in{animation:fadeIn .25s ease both}
+  .toast{position:fixed;bottom:24px;right:24px;background:#2d5a27;color:#fff;border-radius:.5rem;padding:13px 20px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 4px 24px rgba(21,66,18,.22);display:none;align-items:center;gap:8px}
+  .toast.show{display:flex;animation:fadeIn .2s ease both}
+  .modal-bg{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
+  .chat-user{background:#2d5a27;color:#fff;border-radius:1rem 1rem .25rem 1rem;padding:10px 14px;max-width:80%;align-self:flex-end;font-size:13px;line-height:1.5}
+  .chat-ai{background:#fff;color:#1b1c1c;border:1px solid #c2c9bb;border-radius:1rem 1rem 1rem .25rem;padding:10px 14px;max-width:86%;align-self:flex-start;font-size:13px;line-height:1.6}
+  .chat-ai p{margin:.3em 0}.chat-ai strong{color:#154212}
+  .typing-dot{width:7px;height:7px;background:#c2c9bb;border-radius:50%;animation:blink 1.2s infinite both}
+  .typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+  #chat-messages::-webkit-scrollbar{width:4px}
+  #chat-messages::-webkit-scrollbar-thumb{background:#c2c9bb;border-radius:2px}
+  .db-badge{display:inline-flex;align-items:center;gap:4px;background:#bcf0ae;color:#154212;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.04em}
+  .label-t{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#72796e;margin-bottom:6px;font-family:'Public Sans',sans-serif}
+  .inp{width:100%;padding:10px 14px;background:#fff;border:1px solid #c2c9bb;border-radius:.5rem;font-size:13px;color:#1b1c1c;transition:border-color .15s}
+  .pfx{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#72796e;font-size:13px;font-weight:600;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-[#F4F1EA] border-b border-[#D1CDC2]">
+  <div class="flex items-center gap-3">
+    <button onclick="toggleSidebar()" class="material-symbols-outlined text-[#2D5A27] hover:bg-stone-200/60 p-2 rounded-full transition-colors">menu</button>
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-full bg-[#2D5A27] flex items-center justify-center"><span class="material-symbols-outlined fill-icon text-white text-[18px]">eco</span></div>
+      <span class="font-manrope font-extrabold text-lg tracking-tight text-[#154212]">PURITY</span>
+      <span class="hidden sm:inline font-inter text-xs text-stone-400">Nanbenda Barters LLC</span>
+    </div>
+    <span class="db-badge ml-1"><span class="material-symbols-outlined fill-icon" style="font-size:11px">database</span>LOCAL DB</span>
+  </div>
+  <div class="flex items-center gap-1">
+    <button onclick="showPage('ai')" class="material-symbols-outlined text-[#2d5a27] hover:bg-stone-200/60 p-2 rounded-full transition-colors" title="AI Assistant">smart_toy</button>
+    <button class="material-symbols-outlined text-stone-500 hover:bg-stone-200/60 p-2 rounded-full transition-colors">notifications</button>
+    <div class="w-8 h-8 rounded-full bg-[#2d5a27] flex items-center justify-center overflow-hidden"><img alt="User" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvOAPc21ZBAdp1APTevuwlaAXJlLtRCFxaWF1itAqc610loxT37XbCLz3LiL8pqcgDEp2_xfvBo5WtAIO8R63SFUu479NpcxenLiGhYxAnNk2oUm7BTjfsdRJoeA-TJvUZqivKbEKTnGCp24OVkvI72iuS-00x-s_5dCAVERyOEHcYsM8i5a9NxbaCKZmdYX4l53ZAM9j0NxfKLi-NlJnJd3kM-6C8xbu-axjV6JaRTq6Hjivl6R_U3tUqCqmdQtp2yAKSkaRO_gQ"/></div>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-72 flex flex-col bg-[#F4F1EA] border-r border-[#D1CDC2] z-40 transition-transform duration-300">
+  <div class="p-5 flex items-center gap-3 border-b border-[#D1CDC2]">
+    <div class="w-10 h-10 rounded-xl bg-[#2d5a27] flex items-center justify-center shadow"><span class="material-symbols-outlined fill-icon text-white">eco</span></div>
+    <div><p class="font-manrope text-sm font-bold text-stone-900">PURITY System</p><p class="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">Nanbenda Barters LLC</p></div>
+  </div>
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    <p class="text-[10px] text-stone-400 uppercase tracking-widest font-semibold px-3 mb-2">Main</p>
+    <a onclick="showPage('dashboard')" id="nav-dashboard" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer hover:bg-stone-200/70 text-stone-700 transition-all"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="font-manrope text-sm font-medium">Dashboard</span></a>
+    <a onclick="showPage('products')" id="nav-products" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer hover:bg-stone-200/70 text-stone-700 transition-all"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="font-manrope text-sm font-medium">Products & Pricing</span></a>
+    <a onclick="showPage('sales')" id="nav-sales" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer hover:bg-stone-200/70 text-stone-700 transition-all"><span class="material-symbols-outlined text-[20px]">point_of_sale</span><span class="font-manrope text-sm font-medium">Sales</span></a>
+    <a onclick="showPage('whatsapp')" id="nav-whatsapp" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer hover:bg-stone-200/70 text-stone-700 transition-all"><span class="material-symbols-outlined text-[20px]">message</span><span class="font-manrope text-sm font-medium">WhatsApp Logs</span></a>
+    <p class="text-[10px] text-stone-400 uppercase tracking-widest font-semibold px-3 mb-2 mt-4">Finance</p>
+    <a onclick="showPage('finance')" id="nav-finance" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer hover:bg-stone-200/70 text-stone-700 transition-all"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-manrope text-sm font-medium">Finance / Invoicing</span></a>
+    <a onclick="showPage('reports')" id="nav-reports" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer hover:bg-stone-200/70 text-stone-700 transition-all"><span class="material-symbols-outlined text-[20px]">bar_chart</span><span class="font-manrope text-sm font-medium">Reports</span></a>
+    <p class="text-[10px] text-stone-400 uppercase tracking-widest font-semibold px-3 mb-2 mt-4">AI</p>
+    <a onclick="showPage('ai')" id="nav-ai" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer hover:bg-stone-200/70 text-stone-700 transition-all"><span class="material-symbols-outlined text-[20px]">smart_toy</span><span class="font-manrope text-sm font-medium">AI Assistant</span></a>
+  </nav>
+  <div class="p-4 border-t border-[#D1CDC2]">
+    <div class="bg-white/60 p-3 rounded-xl border border-[#D1CDC2]">
+      <p class="text-[10px] font-bold text-stone-400 uppercase mb-2">Database</p>
+      <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div><span class="text-xs font-semibold text-stone-700" id="db-status-text">Ready</span></div>
+      <p class="text-[10px] text-stone-400 mt-1" id="db-record-count">—</p>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main id="main-content" class="pt-16 ml-72 min-h-screen transition-all duration-300">
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active fade-in p-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Overview</p><h2 class="font-manrope font-bold text-3xl text-[#154212]">Dashboard</h2><p class="text-sm text-stone-500 mt-1">Live from your local database.</p></div>
+      <button onclick="showPage('sales');setTimeout(openSaleModal,100)" class="flex items-center gap-2 px-5 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow hover:bg-[#154212] transition-colors"><span class="material-symbols-outlined text-[18px]">add</span>Record Sale</button>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Products</p><span class="font-manrope font-bold text-3xl text-[#154212]" id="d-products">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Sales</p><span class="font-manrope font-bold text-3xl text-[#154212]" id="d-sales">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Revenue</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="d-revenue">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Gross Profit</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="d-profit">—</span></div>
+    </div>
+    <div class="bg-white border border-[#c2c9bb] rounded-xl overflow-hidden shadow-sm mb-6">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-[#D1CDC2]"><h3 class="font-manrope font-semibold text-base text-stone-800">Recent Sales</h3><button onclick="showPage('sales')" class="text-xs text-[#2d5a27] font-semibold hover:underline">View All →</button></div>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-[#f5f3f3] border-b border-[#D1CDC2]"><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Date</th><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Product</th><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Customer</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Qty</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Amount</th></tr></thead><tbody id="d-recent"></tbody></table></div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <button onclick="showPage('products')" class="bg-white border border-[#c2c9bb] rounded-xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:border-[#2d5a27] transition-all group"><div class="w-10 h-10 rounded-full bg-[#bcf0ae] flex items-center justify-center group-hover:bg-[#2d5a27] transition-colors"><span class="material-symbols-outlined text-[#154212] group-hover:text-white text-[20px]">add_shopping_cart</span></div><span class="text-xs font-semibold text-stone-700">Add Product</span></button>
+      <button onclick="showPage('sales');setTimeout(openSaleModal,100)" class="bg-white border border-[#c2c9bb] rounded-xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:border-[#2d5a27] transition-all group"><div class="w-10 h-10 rounded-full bg-[#ffdcbf] flex items-center justify-center group-hover:bg-[#7e562e] transition-colors"><span class="material-symbols-outlined text-[#7e562e] group-hover:text-white text-[20px]">point_of_sale</span></div><span class="text-xs font-semibold text-stone-700">Record Sale</span></button>
+      <button onclick="showPage('reports')" class="bg-white border border-[#c2c9bb] rounded-xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:border-[#2d5a27] transition-all group"><div class="w-10 h-10 rounded-full bg-[#bcf0ae] flex items-center justify-center group-hover:bg-[#2d5a27] transition-colors"><span class="material-symbols-outlined text-[#154212] group-hover:text-white text-[20px]">bar_chart</span></div><span class="text-xs font-semibold text-stone-700">Reports</span></button>
+      <button onclick="showPage('ai')" class="bg-white border border-[#c2c9bb] rounded-xl p-4 flex flex-col items-center gap-2 hover:shadow-md hover:border-[#2d5a27] transition-all group"><div class="w-10 h-10 rounded-full bg-[#ffdcbf] flex items-center justify-center group-hover:bg-[#7e562e] transition-colors"><span class="material-symbols-outlined text-[#7e562e] group-hover:text-white text-[20px]">smart_toy</span></div><span class="text-xs font-semibold text-stone-700">Ask AI</span></button>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <div id="page-products" class="page fade-in p-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Catalogue</p><h2 class="font-manrope font-bold text-3xl text-[#154212]">Products & Pricing</h2><p class="text-sm text-stone-500 mt-1">Saved to IndexedDB — persists across sessions.</p></div>
+      <button onclick="openProductModal()" class="flex items-center gap-2 px-5 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow hover:bg-[#154212] transition-colors"><span class="material-symbols-outlined text-[18px]">add</span>Add Product</button>
+    </div>
+    <div class="flex gap-3 mb-6">
+      <div class="relative flex-1"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-[20px]">search</span><input id="prod-search" oninput="renderProducts()" type="text" placeholder="Search…" class="w-full pl-10 pr-4 py-2.5 bg-white border border-[#c2c9bb] rounded-lg text-sm"/></div>
+      <select id="prod-sf" onchange="renderProducts()" class="px-4 py-2.5 bg-white border border-[#c2c9bb] rounded-lg text-sm text-stone-600"><option value="">All Status</option><option>Active</option><option>Low Stock</option><option>Inactive</option></select>
+    </div>
+    <div class="bg-white border border-[#c2c9bb] rounded-xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-[#f5f3f3] border-b border-[#D1CDC2]"><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Product Name</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Cost ($)</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Sell ($)</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Margin</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Stock</th><th class="text-center px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Status</th><th class="text-center px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Actions</th></tr></thead><tbody id="prod-tbody"><tr><td colspan="6" class="px-6 py-10 text-center text-stone-400">Loading…</td></tr></tbody></table></div>
+      <div class="px-6 py-3 border-t border-[#D1CDC2]"><p class="text-xs text-stone-400" id="prod-count"></p></div>
+    </div>
+  </div>
+
+  <!-- SALES -->
+  <div id="page-sales" class="page fade-in p-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Transactions</p><h2 class="font-manrope font-bold text-3xl text-[#154212]">Sales</h2><p class="text-sm text-stone-500 mt-1">Every sale persisted to local database.</p></div>
+      <button onclick="openSaleModal()" class="flex items-center gap-2 px-5 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow hover:bg-[#154212] transition-colors"><span class="material-symbols-outlined text-[18px]">add</span>Record Sale</button>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Transactions</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="s-count">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Revenue</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="s-rev">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Gross Profit</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="s-profit">—</span></div>
+    </div>
+    <div class="bg-white border border-[#c2c9bb] rounded-xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-[#f5f3f3] border-b border-[#D1CDC2]"><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Date</th><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Product</th><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Customer</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Qty</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Unit Price</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Total</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Profit</th><th class="text-center px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Del</th></tr></thead><tbody id="sales-tbody"><tr><td colspan="8" class="px-6 py-10 text-center text-stone-400">No sales yet.</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- WHATSAPP -->
+  <div id="page-whatsapp" class="page fade-in p-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Comms</p><h2 class="font-manrope font-bold text-3xl text-[#154212]">WhatsApp Entry Log</h2><p class="text-sm text-stone-500 mt-1">Trade enquiries and orders from WhatsApp.</p></div>
+      <button onclick="openWAModal()" class="flex items-center gap-2 px-5 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow hover:bg-[#154212] transition-colors"><span class="material-symbols-outlined text-[18px]">add</span>Log Entry</button>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="stat-card p-4"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Total Logs</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="wa-total">—</span></div>
+      <div class="stat-card p-4"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Pending</p><span class="font-manrope font-bold text-2xl text-[#7e562e]" id="wa-pending">—</span></div>
+      <div class="stat-card p-4"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Fulfilled</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="wa-fulfilled">—</span></div>
+    </div>
+    <div class="bg-white border border-[#c2c9bb] rounded-xl overflow-hidden shadow-sm"><div class="divide-y divide-[#D1CDC2]" id="wa-list"><div class="px-6 py-10 text-center text-stone-400 text-sm">No entries yet.</div></div></div>
+  </div>
+
+  <!-- FINANCE -->
+  <div id="page-finance" class="page fade-in p-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Finance</p><h2 class="font-manrope font-bold text-3xl text-[#154212]">Finance & Invoicing</h2><p class="text-sm text-stone-500 mt-1">Invoices stored to local database.</p></div>
+      <button onclick="openInvoiceModal()" class="flex items-center gap-2 px-5 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow hover:bg-[#154212] transition-colors"><span class="material-symbols-outlined text-[18px]">add</span>New Invoice</button>
+    </div>
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Total Invoiced</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="f-total">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Paid</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="f-paid">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Outstanding</p><span class="font-manrope font-bold text-2xl text-[#ba1a1a]" id="f-unpaid">—</span></div>
+    </div>
+    <div class="bg-white border border-[#c2c9bb] rounded-xl overflow-hidden shadow-sm">
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-[#f5f3f3] border-b border-[#D1CDC2]"><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Ref</th><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Customer</th><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Description</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Amount</th><th class="text-center px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Status</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Date</th><th class="text-center px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Actions</th></tr></thead><tbody id="finance-tbody"><tr><td colspan="7" class="px-6 py-10 text-center text-stone-400">No invoices yet.</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div id="page-reports" class="page fade-in p-6">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-1">Analytics</p><h2 class="font-manrope font-bold text-3xl text-[#154212]">Reports</h2><p class="text-sm text-stone-500 mt-1">Generated live from your local database.</p></div>
+      <button onclick="buildReports()" class="flex items-center gap-2 px-4 py-2.5 border border-[#c2c9bb] bg-white rounded-lg text-sm text-stone-600 hover:border-[#2d5a27] transition-colors"><span class="material-symbols-outlined text-[18px]">refresh</span>Refresh</button>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Revenue</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="r-revenue">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Cost</p><span class="font-manrope font-bold text-2xl text-[#7e562e]" id="r-cost">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Gross Profit</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="r-profit">—</span></div>
+      <div class="stat-card p-5"><p class="text-[11px] font-bold uppercase tracking-widest text-stone-400 mb-2">Avg Margin</p><span class="font-manrope font-bold text-2xl text-[#154212]" id="r-margin">—</span></div>
+    </div>
+    <div class="bg-white border border-[#c2c9bb] rounded-xl overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-[#D1CDC2]"><h3 class="font-manrope font-semibold text-base text-stone-800">Top Products by Revenue</h3></div>
+      <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="bg-[#f5f3f3] border-b border-[#D1CDC2]"><th class="text-left px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Product</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Units</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Revenue</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Profit</th><th class="text-right px-6 py-3 text-[11px] font-bold uppercase tracking-widest text-stone-400">Margin</th></tr></thead><tbody id="r-prod-tbody"><tr><td colspan="5" class="px-6 py-8 text-center text-stone-400">No sales data yet.</td></tr></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- AI ASSISTANT -->
+  <div id="page-ai" class="page fade-in" style="height:calc(100vh - 4rem);flex-direction:column">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-[#D1CDC2] bg-[#F4F1EA]">
+      <div><h2 class="font-manrope font-bold text-xl text-[#154212]">AI Assistant — RAG</h2><p class="text-xs text-stone-400 mt-0.5">Queries your live local database · Powered by Claude</p></div>
+      <button onclick="clearChat()" class="text-xs text-stone-400 hover:text-stone-700 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">delete_sweep</span>Clear</button>
+    </div>
+    <div id="chat-messages" class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3" style="min-height:0">
+      <div class="chat-ai"><strong>👋 Hello!</strong> I'm your PURITY AI — I have live access to your local database.<br><br>Try asking:<br>• <em>"What is my total revenue?"</em><br>• <em>"Which product has the best margin?"</em><br>• <em>"List all unpaid invoices"</em><br>• <em>"How many sales this week?"</em><br>• <em>"What are my top selling products?"</em></div>
+    </div>
+    <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#F4F1EA]">
+      <div class="flex gap-3 items-end">
+        <textarea id="ai-input" rows="1" placeholder="Ask anything about your PURITY data…" onkeydown="aiKeydown(event)" class="flex-1 px-4 py-2.5 bg-white border border-[#c2c9bb] rounded-xl text-sm resize-none" style="max-height:100px;overflow-y:auto"></textarea>
+        <button onclick="sendAI()" id="ai-btn" class="flex items-center gap-2 px-5 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow hover:bg-[#154212] transition-colors whitespace-nowrap disabled:opacity-50"><span class="material-symbols-outlined text-[18px]">send</span></button>
+      </div>
+      <p class="text-[10px] text-stone-400 mt-2 text-center">Claude reads your entire local database before every response (RAG).</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODALS -->
+
+<!-- Product -->
+<div id="pm" class="modal-bg" style="display:none"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 fade-in overflow-hidden">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-[#D1CDC2] bg-[#F4F1EA]"><div><h3 class="font-manrope font-bold text-lg text-[#154212]" id="pm-title">Add Product</h3><p class="text-xs text-stone-400">PURITY Catalogue</p></div><button onclick="closeM('pm')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200"><span class="material-symbols-outlined text-stone-500">close</span></button></div>
+  <div class="px-6 py-6 space-y-4">
+    <input type="hidden" id="pm-id"/>
+    <div><label class="label-t">Product Name *</label><input id="pm-name" type="text" placeholder="e.g. PURITY Long Grain Rice 50kg" class="inp"/></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="label-t">Cost Price ($) *</label><div class="relative"><span class="pfx">$</span><input id="pm-cost" type="number" min="0" oninput="calcMP()" class="inp pl-8" placeholder="0"/></div></div>
+      <div><label class="label-t">Selling Price ($) *</label><div class="relative"><span class="pfx">$</span><input id="pm-sell" type="number" min="0" oninput="calcMP()" class="inp pl-8" placeholder="0"/></div></div>
+    </div>
+    <div id="pm-mprev" class="hidden bg-[#f5f3f3] rounded-lg px-4 py-3 flex items-center justify-between border border-[#D1CDC2]"><span class="text-xs text-stone-500 font-semibold">Calculated Margin</span><span id="pm-mval" class="font-manrope font-bold text-lg text-[#154212]">—</span></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="label-t">Category</label><select id="pm-cat" class="inp"><option>Rice</option><option>Grains</option><option>Flour</option><option>Other</option></select></div>
+      <div><label class="label-t">Status</label><select id="pm-status" class="inp"><option>Active</option><option>Low Stock</option><option>Inactive</option></select></div>
+    </div>
+    <div><label class="label-t">Stock / Inventory Qty <span class="text-red-400">*</span></label>
+      <div class="relative"><span class="pfx" style="left:12px;top:50%;transform:translateY(-50%);position:absolute;color:#72796e;font-size:13px;font-weight:600;pointer-events:none">📦</span>
+      <input id="pm-stock" type="number" min="0" value="0" class="inp" style="padding-left:32px" placeholder="0"/></div>
+      <p class="text-[10px] text-stone-400 mt-1">Total units available in stock</p></div>
+    <div><label class="label-t">Low Stock Alert Level</label>
+      <input id="pm-lowstock" type="number" min="0" value="10" class="inp" placeholder="10"/></div>
+    <div><label class="label-t">Notes</label><textarea id="pm-notes" rows="2" class="inp resize-none" placeholder="Optional…"></textarea></div>
+  </div>
+  <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#f5f3f3] flex justify-between">
+    <button onclick="closeM('pm')" class="px-5 py-2.5 border border-[#c2c9bb] bg-white rounded-full text-sm font-semibold text-stone-600">Cancel</button>
+    <button onclick="saveProduct()" class="flex items-center gap-2 px-6 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow"><span class="material-symbols-outlined text-[18px]">save</span>Save Product</button>
+  </div>
+</div></div>
+
+<!-- Sale -->
+<div id="sm" class="modal-bg" style="display:none"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 fade-in overflow-hidden">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-[#D1CDC2] bg-[#F4F1EA]"><div><h3 class="font-manrope font-bold text-lg text-[#154212]">Record Sale</h3><p class="text-xs text-stone-400">Saved to local database</p></div><button onclick="closeM('sm')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200"><span class="material-symbols-outlined text-stone-500">close</span></button></div>
+  <div class="px-6 py-6 space-y-4">
+    <div><label class="label-t">Product *</label><select id="sm-product" class="inp" onchange="fillSP()"><option value="">— Select product —</option></select>
+      <p id="sm-stock-info" class="text-xs font-semibold mt-1" style="display:none"></p></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="label-t">Quantity *</label><input id="sm-qty" type="number" min="1" value="1" oninput="calcST()" class="inp"/></div>
+      <div><label class="label-t">Unit Price ($) *</label><div class="relative"><span class="pfx">$</span><input id="sm-price" type="number" min="0" oninput="calcST()" class="inp pl-8"/></div></div>
+    </div>
+    <div id="sm-tprev" class="hidden bg-[#f5f3f3] rounded-lg px-4 py-3 flex items-center justify-between border border-[#D1CDC2]"><span class="text-xs text-stone-500 font-semibold">Sale Total</span><span id="sm-tval" class="font-manrope font-bold text-lg text-[#154212]">—</span></div>
+    <div><label class="label-t">Customer</label><input id="sm-customer" type="text" class="inp" placeholder="Customer name"/></div>
+    <div><label class="label-t">Date</label><input id="sm-date" type="date" class="inp"/></div>
+    <div><label class="label-t">Notes</label><textarea id="sm-notes" rows="2" class="inp resize-none" placeholder="Optional…"></textarea></div>
+  </div>
+  <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#f5f3f3] flex justify-between">
+    <button onclick="closeM('sm')" class="px-5 py-2.5 border border-[#c2c9bb] bg-white rounded-full text-sm font-semibold text-stone-600">Cancel</button>
+    <button onclick="saveSale()" class="flex items-center gap-2 px-6 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow"><span class="material-symbols-outlined text-[18px]">save</span>Save Sale</button>
+  </div>
+</div></div>
+
+<!-- WhatsApp -->
+<div id="wam" class="modal-bg" style="display:none"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 fade-in overflow-hidden">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-[#D1CDC2] bg-[#F4F1EA]"><h3 class="font-manrope font-bold text-lg text-[#154212]">Log WhatsApp Entry</h3><button onclick="closeM('wam')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200"><span class="material-symbols-outlined text-stone-500">close</span></button></div>
+  <div class="px-6 py-6 space-y-4">
+    <div><label class="label-t">Customer *</label><input id="wa-name" type="text" class="inp" placeholder="e.g. Kunle Bello"/></div>
+    <div><label class="label-t">Message / Order</label><textarea id="wa-msg" rows="3" class="inp resize-none" placeholder="Paste or type message…"></textarea></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="label-t">Product</label><select id="wa-product" class="inp"><option value="">— None —</option></select></div>
+      <div><label class="label-t">Status</label><select id="wa-status" class="inp"><option>Pending</option><option>Responded</option><option>Fulfilled</option></select></div>
+    </div>
+  </div>
+  <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#f5f3f3] flex justify-between">
+    <button onclick="closeM('wam')" class="px-5 py-2.5 border border-[#c2c9bb] bg-white rounded-full text-sm font-semibold text-stone-600">Cancel</button>
+    <button onclick="saveWA()" class="flex items-center gap-2 px-6 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow"><span class="material-symbols-outlined text-[18px]">save</span>Save Log</button>
+  </div>
+</div></div>
+
+<!-- Invoice -->
+<div id="invm" class="modal-bg" style="display:none"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 fade-in overflow-hidden">
+  <div class="flex items-center justify-between px-6 py-5 border-b border-[#D1CDC2] bg-[#F4F1EA]"><h3 class="font-manrope font-bold text-lg text-[#154212]">New Invoice</h3><button onclick="closeM('invm')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200"><span class="material-symbols-outlined text-stone-500">close</span></button></div>
+  <div class="px-6 py-6 space-y-4">
+    <div><label class="label-t">Customer *</label><input id="inv-customer" type="text" class="inp" placeholder="Customer name"/></div>
+    <div><label class="label-t">Description</label><textarea id="inv-desc" rows="2" class="inp resize-none" placeholder="Invoice description…"></textarea></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="label-t">Amount ($) *</label><div class="relative"><span class="pfx">$</span><input id="inv-amount" type="number" min="0" class="inp pl-8"/></div></div>
+      <div><label class="label-t">Status</label><select id="inv-status" class="inp"><option>Unpaid</option><option>Paid</option><option>Overdue</option></select></div>
+    </div>
+    <div><label class="label-t">Date</label><input id="inv-date" type="date" class="inp"/></div>
+  </div>
+  <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#f5f3f3] flex justify-between">
+    <button onclick="closeM('invm')" class="px-5 py-2.5 border border-[#c2c9bb] bg-white rounded-full text-sm font-semibold text-stone-600">Cancel</button>
+    <button onclick="saveInvoice()" class="flex items-center gap-2 px-6 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow"><span class="material-symbols-outlined text-[18px]">save</span>Save Invoice</button>
+  </div>
+</div></div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span class="material-symbols-outlined fill-icon text-[20px]">check_circle</span><span id="toast-msg"></span></div>
+
+<script>
+// ══════════════════════════════════════
+// DATABASE — in-memory, session-scoped
+// All data lives in window._PURITY so it
+// survives showPage() calls within the tab.
+// ══════════════════════════════════════
+if(!window._PURITY){
+  window._PURITY = { products:[], sales:[], whatsapp:[], invoices:[], seeded:false };
+  // Try to load from localStorage once
+  try{
+    ['products','sales','whatsapp','invoices'].forEach(function(s){
+      var raw = localStorage.getItem('pur_'+s);
+      if(raw) window._PURITY[s] = JSON.parse(raw);
+    });
+    if(localStorage.getItem('pur_seeded')==='1') window._PURITY.seeded = true;
+  }catch(e){}
+}
+var MEM = window._PURITY;
+var STORES = ['products','sales','whatsapp','invoices'];
+
+function newId(){ return Date.now() + Math.floor(Math.random()*999); }
+
+function save(store){
+  try{ localStorage.setItem('pur_'+store, JSON.stringify(MEM[store])); }catch(e){}
+}
+
+function getAll(store){
+  // Always read from window._PURITY directly — never a stale reference
+  var arr = window._PURITY[store] || [];
+  return Promise.resolve(arr.map(function(r){ return Object.assign({},r); }));
+}
+
+function dbAdd(store, data){
+  var record = Object.assign({}, data, {id: newId()});
+  MEM[store].push(record);
+  save(store);
+  return Promise.resolve(record.id);
+}
+
+function dbPut(store, data){
+  var numId = Number(data.id);
+  var idx = MEM[store].findIndex(function(r){ return Number(r.id)===numId; });
+  if(idx>=0) MEM[store][idx] = Object.assign({},data);
+  else MEM[store].push(Object.assign({},data));
+  save(store);
+  return Promise.resolve(data.id);
+}
+
+function dbDel(store, id){
+  var numId = Number(id);
+  var before = MEM[store].length;
+  // filter out the deleted record
+  var newArr = [];
+  for(var i=0; i<MEM[store].length; i++){
+    if(Number(MEM[store][i].id) !== numId){
+      newArr.push(MEM[store][i]);
+    }
+  }
+  // write back to BOTH MEM and window._PURITY explicitly
+  MEM[store] = newArr;
+  window._PURITY[store] = newArr;
+  save(store);
+  console.log('dbDel: removed id='+numId+' from '+store+'. Before:'+before+' After:'+MEM[store].length);
+  return Promise.resolve();
+}
+
+function initDB(){ /* data already loaded into window._PURITY above */ }
+
+// ══════════════════════════════════════
+// Helpers
+// ══════════════════════════════════════
+const fmt = n=>'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const today = ()=>new Date().toISOString().slice(0,10);
+const rowBg = i=>i%2?'background:#f5f3f3':'';
+const chip = s=>{
+  const m={Active:'chip-green','Low Stock':'chip-amber',Inactive:'chip-grey',Paid:'chip-green',Unpaid:'chip-amber',Overdue:'chip-red',Pending:'chip-amber',Responded:'chip-green',Fulfilled:'chip-green'};
+  return `<span class="${m[s]||'chip-grey'} text-[11px] font-semibold px-2 py-0.5 rounded-full">${s}</span>`;
+};
+
+function toast(msg,err){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.style.background=err?'#ba1a1a':'#2d5a27';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function closeM(id){ const el=document.getElementById(id); el.style.display='none'; }
+function openM(id){ const el=document.getElementById(id); el.style.display='flex'; }
+
+async function updateDBBadge(){
+  const [p,s,w,i] = await Promise.all(STORES.map(getAll));
+  document.getElementById('db-status-text').textContent='Session DB Active';
+  document.getElementById('db-record-count').textContent=`${p.length} products · ${s.length} sales · ${w.length} logs · ${i.length} invoices`;
+}
+
+// ══════════════════════════════════════
+// Navigation
+// ══════════════════════════════════════
+let sidebarOpen=true;
+function toggleSidebar(){
+  sidebarOpen=!sidebarOpen;
+  document.getElementById('sidebar').style.transform=sidebarOpen?'':'translateX(-100%)';
+  document.getElementById('main-content').style.marginLeft=sidebarOpen?'18rem':'0';
+}
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>{ el.classList.remove('active'); el.style.display='none'; });
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('nav-active'));
+  const el=document.getElementById('page-'+p);
+  if(!el) return;
+  el.style.display = p==='ai' ? 'flex' : 'block';
+  if(p!=='ai') el.classList.add('active');
+  el.classList.add('fade-in');
+  const nav=document.getElementById('nav-'+p);
+  if(nav) nav.classList.add('nav-active');
+  if(p==='dashboard') buildDashboard();
+  if(p==='products') renderProducts();
+  if(p==='sales') renderSales();
+  if(p==='whatsapp') renderWA();
+  if(p==='finance') renderFinance();
+  if(p==='reports') buildReports();
+}
+
+// ══════════════════════════════════════
+// Dashboard
+// ══════════════════════════════════════
+async function buildDashboard(){
+  const [prods,sales]=[await getAll('products'),await getAll('sales')];
+  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0);
+  const cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  document.getElementById('d-products').textContent=prods.length;
+  document.getElementById('d-sales').textContent=sales.length;
+  document.getElementById('d-revenue').textContent=fmt(rev);
+  document.getElementById('d-profit').textContent=fmt(rev-cost);
+  const recent=[...sales].sort((a,b)=>b.id-a.id).slice(0,5);
+  const tbody=document.getElementById('d-recent');
+  tbody.innerHTML=recent.length?recent.map((s,i)=>`
+    <tr style="${rowBg(i)}" class="border-b border-[#D1CDC2]">
+      <td class="px-6 py-3 text-xs text-stone-500">${s.date}</td>
+      <td class="px-6 py-3 font-medium text-stone-800">${s.productName}</td>
+      <td class="px-6 py-3 text-stone-600">${s.customer||'—'}</td>
+      <td class="px-6 py-3 text-right">${s.qty}</td>
+      <td class="px-6 py-3 text-right font-semibold text-[#154212]">${fmt(s.qty*s.price)}</td>
+    </tr>`).join(''):'<tr><td colspan="5" class="px-6 py-8 text-center text-stone-400 text-sm">No sales yet</td></tr>';
+}
+
+// ══════════════════════════════════════
+// Products
+// ══════════════════════════════════════
+async function renderProducts(){
+  const all = window._PURITY.products;
+  const q=(document.getElementById('prod-search')?.value||'').toLowerCase();
+  const sf=document.getElementById('prod-sf')?.value||'';
+  const list=all.filter(p=>p.name.toLowerCase().includes(q)&&(sf===''||p.status===sf));
+  document.getElementById('prod-count').textContent=`${list.length} product${list.length!==1?'s':''} shown`;
+  const tbody=document.getElementById('prod-tbody');
+  if(!list.length){
+    tbody.innerHTML='<tr><td colspan="7" class="px-6 py-10 text-center text-stone-400">No products found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML='';
+  list.forEach(function(p, i){
+    const m = p.sell>0 ? ((p.sell-p.cost)/p.sell*100).toFixed(1) : '—';
+    const stock = p.stock !== undefined ? p.stock : '—';
+    const lowLevel = p.lowStock || 10;
+    const stockNum = Number(p.stock);
+    const stockColor = isNaN(stockNum)||p.stock===undefined ? '#42493e'
+                     : stockNum <= 0 ? '#ba1a1a'
+                     : stockNum <= lowLevel ? '#d97706'
+                     : '#16a34a';
+    const stockLabel = isNaN(stockNum)||p.stock===undefined ? '—'
+                     : stockNum <= 0 ? stockNum+' ⚠ OUT'
+                     : stockNum <= lowLevel ? stockNum+' ⚠ LOW'
+                     : stockNum;
+    const tr = document.createElement('tr');
+    tr.style.background = i%2 ? '#f5f3f3' : '';
+    tr.className = 'border-b border-[#D1CDC2]';
+    tr.innerHTML =
+      '<td class="px-6 py-3 font-medium text-stone-800">'+p.name+'</td>'+
+      '<td class="px-6 py-3 text-right text-stone-600">'+fmt(p.cost)+'</td>'+
+      '<td class="px-6 py-3 text-right font-semibold text-[#154212]">'+fmt(p.sell)+'</td>'+
+      '<td class="px-6 py-3 text-right font-semibold" style="color:'+(parseFloat(m)>=15?'#16a34a':'#d97706')+'">'+m+'%</td>'+
+      '<td class="px-6 py-3 text-right font-bold" style="color:'+stockColor+'">'+stockLabel+'</td>'+
+      '<td class="px-6 py-3 text-center">'+chip(p.status)+'</td>'+
+      '<td class="px-6 py-3 text-center flex items-center justify-center gap-1"></td>';
+    // Stock adjust button
+    const adjBtn = document.createElement('button');
+    adjBtn.className = 'p-1.5 rounded hover:bg-blue-50 transition-colors';
+    adjBtn.title = 'Adjust Stock';
+    adjBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]" style="color:#2d5a27">inventory</span>';
+    adjBtn.addEventListener('click', function(){ openStockModal(p); });
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.className = 'p-1.5 rounded hover:bg-stone-200 transition-colors';
+    editBtn.title = 'Edit Product';
+    editBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-stone-500">edit</span>';
+    editBtn.addEventListener('click', function(){ editProduct(p); });
+    // Delete button
+    const delBtn = document.createElement('button');
+    delBtn.className = 'p-1.5 rounded hover:bg-red-50 transition-colors';
+    delBtn.title = 'Delete Product';
+    delBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-red-400">delete</span>';
+    delBtn.addEventListener('click', function(){ openDelModal(p, p.name); });
+    tr.lastElementChild.appendChild(adjBtn);
+    tr.lastElementChild.appendChild(editBtn);
+    tr.lastElementChild.appendChild(delBtn);
+    tbody.appendChild(tr);
+  });
+}
+
+function openProductModal(){
+  document.getElementById('pm-id').value='';
+  document.getElementById('pm-title').textContent='Add Product';
+  ['pm-name','pm-cost','pm-sell','pm-notes'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('pm-stock').value='0';
+  document.getElementById('pm-lowstock').value='10';
+  document.getElementById('pm-cat').value='Rice';
+  document.getElementById('pm-status').value='Active';
+  document.getElementById('pm-mprev').classList.add('hidden');
+  openM('pm');
+}
+
+async function editProduct(p){
+  if(!p) return;
+  document.getElementById('pm-id').value=p.id;
+  document.getElementById('pm-title').textContent='Edit Product';
+  document.getElementById('pm-name').value=p.name;
+  document.getElementById('pm-cost').value=p.cost;
+  document.getElementById('pm-sell').value=p.sell;
+  document.getElementById('pm-stock').value=p.stock||0;
+  document.getElementById('pm-lowstock').value=p.lowStock||10;
+  document.getElementById('pm-cat').value=p.category||'Rice';
+  document.getElementById('pm-status').value=p.status||'Active';
+  document.getElementById('pm-notes').value=p.notes||'';
+  calcMP(); openM('pm');
+}
+
+function calcMP(){
+  const c=parseFloat(document.getElementById('pm-cost').value)||0;
+  const s=parseFloat(document.getElementById('pm-sell').value)||0;
+  const prev=document.getElementById('pm-mprev'), val=document.getElementById('pm-mval');
+  if(c>0&&s>0){ const m=((s-c)/s*100).toFixed(1); val.textContent=m+'%'; val.style.color=parseFloat(m)>=0?'#154212':'#ba1a1a'; prev.classList.remove('hidden'); }
+  else prev.classList.add('hidden');
+}
+
+async function saveProduct(){
+  try {
+    const id = document.getElementById('pm-id').value;
+    const name = document.getElementById('pm-name').value.trim();
+    const costRaw = document.getElementById('pm-cost').value;
+    const sellRaw = document.getElementById('pm-sell').value;
+    const cost = parseFloat(costRaw);
+    const sell = parseFloat(sellRaw);
+    const stock = parseInt(document.getElementById('pm-stock').value) || 0;
+    const lowStock = parseInt(document.getElementById('pm-lowstock').value) || 10;
+    if(!name){ toast('Product name is required.',true); return; }
+    if(costRaw===''||isNaN(cost)){ toast('Enter a valid cost price.',true); return; }
+    if(sellRaw===''||isNaN(sell)){ toast('Enter a valid selling price.',true); return; }
+    const data = {
+      name, cost, sell, stock, lowStock,
+      category: document.getElementById('pm-cat').value,
+      status: document.getElementById('pm-status').value,
+      notes: document.getElementById('pm-notes').value.trim()
+    };
+    if(id){
+      // Preserve existing stock if editing — only update stock if field was changed
+      const existing = window._PURITY.products.find(p=>Number(p.id)===Number(id));
+      if(existing) data.stock = stock; // keep whatever user entered
+      await dbPut('products', {...data, id: Number(id)});
+      toast('Product updated!');
+    } else {
+      await dbAdd('products', data);
+      toast('Product added!');
+    }
+    closeM('pm');
+    await renderProducts();
+    await updateDBBadge();
+  } catch(e) {
+    toast('Error saving: ' + (e.message||e), true);
+    console.error('saveProduct error:', e);
+  }
+}
+
+// delProduct now handled directly in openDelModal via object reference
+
+// ══════════════════════════════════════
+// Sales
+// ══════════════════════════════════════
+async function openSaleModal(){
+  const prods=await getAll('products');
+  const sel=document.getElementById('sm-product');
+  sel.innerHTML='<option value="">— Select product —</option>'+prods.map(p=>`<option value="${p.id}" data-price="${p.sell}" data-cost="${p.cost}" data-stock="${p.stock!==undefined?p.stock:''}">${p.name}${p.stock!==undefined?' (Stock: '+p.stock+')'  :''}</option>`).join('');
+  document.getElementById('sm-stock-info').style.display='none';
+  document.getElementById('sm-qty').value=1;
+  document.getElementById('sm-price').value='';
+  document.getElementById('sm-customer').value='';
+  document.getElementById('sm-date').value=today();
+  document.getElementById('sm-notes').value='';
+  document.getElementById('sm-tprev').classList.add('hidden');
+  openM('sm');
+}
+
+function fillSP(){
+  const sel=document.getElementById('sm-product');
+  const o=sel.options[sel.selectedIndex];
+  document.getElementById('sm-price').value=o.dataset.price||'';
+  // Show stock info
+  const stockInfo = document.getElementById('sm-stock-info');
+  const stockVal = o.dataset.stock;
+  if(stockVal!==undefined && stockVal!==''){
+    const s=Number(stockVal);
+    stockInfo.textContent = 'Available stock: '+s+' units'+(s<=0?' — OUT OF STOCK':'');
+    stockInfo.style.color = s<=0?'#ba1a1a':s<=10?'#d97706':'#16a34a';
+    stockInfo.style.display='block';
+  } else {
+    stockInfo.style.display='none';
+  }
+  calcST();
+}
+function calcST(){ const q=parseFloat(document.getElementById('sm-qty').value)||0,p=parseFloat(document.getElementById('sm-price').value)||0,el=document.getElementById('sm-tprev'); if(q>0&&p>0){ document.getElementById('sm-tval').textContent=fmt(q*p); el.classList.remove('hidden'); } else el.classList.add('hidden'); }
+
+async function saveSale(){
+  const sel=document.getElementById('sm-product'), opt=sel.options[sel.selectedIndex];
+  const pid=parseInt(sel.value); if(!pid){ toast('Select a product.',true); return; }
+  const qty=parseFloat(document.getElementById('sm-qty').value), price=parseFloat(document.getElementById('sm-price').value);
+  if(!qty||!price){ toast('Enter quantity and price.',true); return; }
+  // Find product and check stock
+  const prod = window._PURITY.products.find(function(p){ return Number(p.id)===pid; });
+  if(prod && prod.stock !== undefined){
+    if(prod.stock < qty){
+      toast('Insufficient stock! Available: '+prod.stock+' units.',true); return;
+    }
+    // Deduct stock
+    prod.stock = prod.stock - qty;
+    // Auto-update status based on stock level
+    const low = prod.lowStock || 10;
+    if(prod.stock <= 0) prod.status = 'Inactive';
+    else if(prod.stock <= low) prod.status = 'Low Stock';
+    else prod.status = 'Active';
+    save('products');
+  }
+  await dbAdd('sales',{productId:pid,productName:opt.textContent,qty,price,costPrice:parseFloat(opt.dataset.cost)||0,customer:document.getElementById('sm-customer').value.trim(),date:document.getElementById('sm-date').value||today(),notes:document.getElementById('sm-notes').value.trim(),createdAt:new Date().toISOString()});
+  toast('Sale recorded! Stock updated.'); closeM('sm'); renderSales(); updateDBBadge();
+}
+
+async function renderSales(){
+  const sales=await getAll('sales'), sorted=[...sales].sort((a,b)=>b.id-a.id);
+  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0), cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  document.getElementById('s-count').textContent=sales.length;
+  document.getElementById('s-rev').textContent=fmt(rev);
+  document.getElementById('s-profit').textContent=fmt(rev-cost);
+  const tbody=document.getElementById('sales-tbody');
+  tbody.innerHTML=sorted.length?sorted.map((s,i)=>{
+    const total=s.qty*s.price, profit=total-s.qty*(s.costPrice||0);
+    return `<tr style="${rowBg(i)}" class="border-b border-[#D1CDC2]">
+      <td class="px-6 py-3 text-xs text-stone-500">${s.date}</td>
+      <td class="px-6 py-3 font-medium text-stone-800">${s.productName}</td>
+      <td class="px-6 py-3 text-stone-600">${s.customer||'—'}</td>
+      <td class="px-6 py-3 text-right">${s.qty}</td>
+      <td class="px-6 py-3 text-right text-stone-600">${fmt(s.price)}</td>
+      <td class="px-6 py-3 text-right font-semibold text-[#154212]">${fmt(total)}</td>
+      <td class="px-6 py-3 text-right font-semibold" style="color:#16a34a">${fmt(profit)}</td>
+      <td class="px-6 py-3 text-center"><button onclick="delSale(${s.id})" class="p-1 rounded hover:bg-red-50"><span class="material-symbols-outlined text-[17px] text-red-400">delete</span></button></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="8" class="px-6 py-10 text-center text-stone-400">No sales yet.</td></tr>';
+}
+
+async function delSale(id){ if(!confirm('Delete sale?')) return; await dbDel('sales',id); toast('Deleted.'); renderSales(); updateDBBadge(); }
+
+// ══════════════════════════════════════
+// WhatsApp
+// ══════════════════════════════════════
+async function openWAModal(){
+  const prods=await getAll('products');
+  document.getElementById('wa-product').innerHTML='<option value="">— None —</option>'+prods.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  ['wa-name','wa-msg'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('wa-status').value='Pending';
+  openM('wam');
+}
+
+async function saveWA(){
+  const name=document.getElementById('wa-name').value.trim();
+  if(!name){ toast('Enter customer name.',true); return; }
+  const sel=document.getElementById('wa-product');
+  await dbAdd('whatsapp',{customer:name,message:document.getElementById('wa-msg').value.trim(),productId:parseInt(sel.value)||null,productName:sel.value?sel.options[sel.selectedIndex].textContent:'',status:document.getElementById('wa-status').value,createdAt:new Date().toISOString()});
+  toast('Log saved!'); closeM('wam'); renderWA(); updateDBBadge();
+}
+
+async function renderWA(){
+  const logs=await getAll('whatsapp'), sorted=[...logs].sort((a,b)=>b.id-a.id);
+  document.getElementById('wa-total').textContent=logs.length;
+  document.getElementById('wa-pending').textContent=logs.filter(l=>l.status==='Pending').length;
+  document.getElementById('wa-fulfilled').textContent=logs.filter(l=>l.status==='Fulfilled').length;
+  const list=document.getElementById('wa-list');
+  if(!sorted.length){ list.innerHTML='<div class="px-6 py-10 text-center text-stone-400 text-sm">No entries yet.</div>'; return; }
+  list.innerHTML=sorted.map((l,i)=>{
+    const ini=l.customer.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const bg=i%2===0?'background:#bcf0ae;color:#154212':'background:#ffdcbf;color:#7e562e';
+    const when=new Date(l.createdAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div style="${i%2?'background:#f5f3f3':''}" class="px-6 py-4 flex items-start gap-4">
+      <div style="width:36px;height:36px;border-radius:50%;${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:Manrope;font-weight:700;font-size:13px">${ini}</div>
+      <div style="flex:1;min-width:0">
+        <div class="flex items-center justify-between gap-2"><span class="font-semibold text-sm text-stone-800">${l.customer}</span>
+          <div class="flex items-center gap-2"><span class="text-xs text-stone-400">${when}</span>
+            <button onclick="delWA(${l.id})" class="p-0.5 rounded hover:bg-red-50"><span class="material-symbols-outlined text-[16px] text-red-400">delete</span></button>
+          </div>
+        </div>
+        <p class="text-sm text-stone-600 mt-0.5" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.message||'—'}</p>
+        <div class="flex items-center gap-2 mt-1.5">${chip(l.status)}<span class="text-xs text-stone-400">${l.productName||''}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function delWA(id){ await dbDel('whatsapp',id); toast('Deleted.'); renderWA(); updateDBBadge(); }
+
+// ══════════════════════════════════════
+// Finance
+// ══════════════════════════════════════
+function openInvoiceModal(){
+  ['inv-customer','inv-desc','inv-amount'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('inv-status').value='Unpaid';
+  document.getElementById('inv-date').value=today();
+  openM('invm');
+}
+
+async function saveInvoice(){
+  const customer=document.getElementById('inv-customer').value.trim();
+  const amount=parseFloat(document.getElementById('inv-amount').value);
+  if(!customer||isNaN(amount)){ toast('Fill required fields.',true); return; }
+  await dbAdd('invoices',{ref:'INV-'+String(Date.now()).slice(-5),customer,description:document.getElementById('inv-desc').value.trim(),amount,status:document.getElementById('inv-status').value,date:document.getElementById('inv-date').value||today(),createdAt:new Date().toISOString()});
+  toast('Invoice saved!'); closeM('invm'); renderFinance(); updateDBBadge();
+}
+
+async function renderFinance(){
+  const invs=await getAll('invoices'), sorted=[...invs].sort((a,b)=>b.id-a.id);
+  const total=invs.reduce((a,i)=>a+i.amount,0);
+  const paid=invs.filter(i=>i.status==='Paid').reduce((a,i)=>a+i.amount,0);
+  document.getElementById('f-total').textContent=fmt(total);
+  document.getElementById('f-paid').textContent=fmt(paid);
+  document.getElementById('f-unpaid').textContent=fmt(total-paid);
+  const tbody=document.getElementById('finance-tbody');
+  tbody.innerHTML=sorted.length?sorted.map((inv,i)=>`
+    <tr style="${rowBg(i)}" class="border-b border-[#D1CDC2]">
+      <td class="px-6 py-3 font-inter font-semibold text-[#2d5a27]">${inv.ref}</td>
+      <td class="px-6 py-3 font-medium text-stone-800">${inv.customer}</td>
+      <td class="px-6 py-3 text-stone-500 text-xs">${inv.description||'—'}</td>
+      <td class="px-6 py-3 text-right font-semibold text-[#154212]">${fmt(inv.amount)}</td>
+      <td class="px-6 py-3 text-center">${chip(inv.status)}</td>
+      <td class="px-6 py-3 text-right text-xs text-stone-400">${inv.date}</td>
+      <td class="px-6 py-3 text-center flex items-center justify-center gap-1">
+        <button onclick="togglePaid(${inv.id},'${inv.status}')" class="p-1 rounded hover:bg-stone-100" title="${inv.status==='Paid'?'Mark Unpaid':'Mark Paid'}">
+          <span class="material-symbols-outlined text-[17px]" style="color:${inv.status==='Paid'?'#d97706':'#16a34a'}">${inv.status==='Paid'?'unpublished':'check_circle'}</span>
+        </button>
+        <button onclick="delInvoice(${inv.id})" class="p-1 rounded hover:bg-red-50"><span class="material-symbols-outlined text-[17px] text-red-400">delete</span></button>
+      </td>
+    </tr>`).join(''):'<tr><td colspan="7" class="px-6 py-10 text-center text-stone-400">No invoices yet.</td></tr>';
+}
+
+async function togglePaid(id,cur){
+  const invs=await getAll('invoices'), inv=invs.find(i=>i.id===id);
+  if(!inv) return;
+  inv.status=cur==='Paid'?'Unpaid':'Paid';
+  await dbPut('invoices',inv); toast(`Marked ${inv.status}.`); renderFinance();
+}
+
+async function delInvoice(id){ if(!confirm('Delete invoice?')) return; await dbDel('invoices',id); toast('Deleted.'); renderFinance(); updateDBBadge(); }
+
+// ══════════════════════════════════════
+// Reports
+// ══════════════════════════════════════
+async function buildReports(){
+  const [sales,prods]=[await getAll('sales'),await getAll('products')];
+  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0);
+  const cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  const profit=rev-cost;
+  const margin=rev>0?(profit/rev*100).toFixed(1):0;
+  document.getElementById('r-revenue').textContent=fmt(rev);
+  document.getElementById('r-cost').textContent=fmt(cost);
+  document.getElementById('r-profit').textContent=fmt(profit);
+  document.getElementById('r-margin').textContent=margin+'%';
+  const map={};
+  sales.forEach(s=>{ if(!map[s.productName]) map[s.productName]={name:s.productName,units:0,rev:0,profit:0}; map[s.productName].units+=s.qty; map[s.productName].rev+=s.qty*s.price; map[s.productName].profit+=s.qty*s.price-s.qty*(s.costPrice||0); });
+  const sorted=Object.values(map).sort((a,b)=>b.rev-a.rev);
+  const tbody=document.getElementById('r-prod-tbody');
+  tbody.innerHTML=sorted.length?sorted.map((p,i)=>{
+    const m=p.rev>0?(p.profit/p.rev*100).toFixed(1):0;
+    return `<tr style="${rowBg(i)}" class="border-b border-[#D1CDC2]">
+      <td class="px-6 py-3 font-medium text-stone-800">${p.name}</td>
+      <td class="px-6 py-3 text-right text-stone-600">${p.units}</td>
+      <td class="px-6 py-3 text-right font-semibold text-[#154212]">${fmt(p.rev)}</td>
+      <td class="px-6 py-3 text-right font-semibold" style="color:#16a34a">${fmt(p.profit)}</td>
+      <td class="px-6 py-3 text-right font-semibold" style="color:${parseFloat(m)>=15?'#16a34a':'#d97706'}">${m}%</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="5" class="px-6 py-8 text-center text-stone-400">No sales data yet.</td></tr>';
+}
+
+// ══════════════════════════════════════
+// AI Assistant — RAG
+// ══════════════════════════════════════
+let chatHistory=[];
+
+async function buildContext(){
+  const [prods,sales,wa,invs]=await Promise.all(STORES.map(getAll));
+  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0);
+  const cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  const profit=rev-cost;
+  const margin=rev>0?(profit/rev*100).toFixed(1):0;
+
+  const prodLines=prods.map(p=>`- ${p.name} | Cost: $${p.cost} | Sell: $${p.sell} | Margin: ${p.sell>0?((p.sell-p.cost)/p.sell*100).toFixed(1):0}% | Status: ${p.status} | Category: ${p.category}`).join('\n');
+  const saleLines=[...sales].sort((a,b)=>b.id-a.id).slice(0,30).map(s=>`- ${s.date}: ${s.productName} | Qty:${s.qty} | Price:$${s.price} | Total:$${s.qty*s.price} | Profit:$${s.qty*s.price-s.qty*(s.costPrice||0)} | Customer:${s.customer||'N/A'}`).join('\n');
+  const invLines=[...invs].sort((a,b)=>b.id-a.id).slice(0,15).map(i=>`- ${i.ref}: ${i.customer} | $${i.amount} | ${i.status} | ${i.date} | ${i.description||''}`).join('\n');
+  const waLines=[...wa].sort((a,b)=>b.id-a.id).slice(0,15).map(w=>`- ${w.customer}: "${(w.message||'').slice(0,80)}" | Status:${w.status} | Product:${w.productName||'N/A'}`).join('\n');
+
+  // Per-product aggregation for richer context
+  const map={};
+  sales.forEach(s=>{ if(!map[s.productName]) map[s.productName]={units:0,rev:0,profit:0}; map[s.productName].units+=s.qty; map[s.productName].rev+=s.qty*s.price; map[s.productName].profit+=s.qty*s.price-s.qty*(s.costPrice||0); });
+  const topProds=Object.entries(map).sort(([,a],[,b])=>b.rev-a.rev).map(([name,d])=>`- ${name}: ${d.units} units | Revenue $${d.rev.toLocaleString()} | Profit $${d.profit.toLocaleString()} | Margin ${d.rev>0?(d.profit/d.rev*100).toFixed(1):0}%`).join('\n');
+
+  return `You are the AI business assistant for PURITY brand, owned by Nanbenda Barters LLC (rice/agricultural barter company in Nigeria). You have FULL access to their live local IndexedDB database. Always use $ for US Dollars. Be concise, accurate, and business-focused.
+
+══ LIVE DATABASE SNAPSHOT ══
+
+PRODUCTS CATALOGUE (${prods.length} products):
+${prodLines||'Empty'}
+
+SALES PERFORMANCE:
+- Total transactions: ${sales.length}
+- Total revenue: $${rev.toLocaleString()}
+- Total cost of goods: $${cost.toLocaleString()}
+- Gross profit: $${profit.toLocaleString()}
+- Overall margin: ${margin}%
+
+TOP PRODUCTS BY REVENUE:
+${topProds||'No sales data'}
+
+RECENT SALES LOG (last 30):
+${saleLines||'No sales'}
+
+INVOICING / FINANCE:
+- Total invoices: ${invs.length}
+- Total invoiced: $${invs.reduce((a,i)=>a+i.amount,0).toLocaleString()}
+- Paid: $${invs.filter(i=>i.status==='Paid').reduce((a,i)=>a+i.amount,0).toLocaleString()}
+- Outstanding: $${invs.filter(i=>i.status!=='Paid').reduce((a,i)=>a+i.amount,0).toLocaleString()}
+
+RECENT INVOICES (last 15):
+${invLines||'No invoices'}
+
+WHATSAPP LOGS:
+- Total: ${wa.length} | Pending: ${wa.filter(w=>w.status==='Pending').length} | Fulfilled: ${wa.filter(w=>w.status==='Fulfilled').length}
+
+RECENT WHATSAPP ENTRIES (last 15):
+${waLines||'No logs'}`;
+}
+
+function appendBubble(role,text){
+  const msgs=document.getElementById('chat-messages');
+  const div=document.createElement('div');
+  div.className=role==='user'?'chat-user':'chat-ai';
+  if(role==='assistant'){
+    div.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/`([^`]+)`/g,'<code style="background:#f5f3f3;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:12px">$1</code>').replace(/\n/g,'<br>');
+  } else div.textContent=text;
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return div;
+}
+
+function showTyping(){ const msgs=document.getElementById('chat-messages'); const d=document.createElement('div'); d.className='chat-ai flex items-center gap-1.5'; d.id='typing'; d.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>'; msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight; }
+function removeTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
+
+function aiKeydown(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendAI(); } }
+
+async function sendAI(){
+  const input=document.getElementById('ai-input');
+  const msg=input.value.trim(); if(!msg) return;
+  input.value='';
+  appendBubble('user',msg);
+  chatHistory.push({role:'user',content:msg});
+  document.getElementById('ai-btn').disabled=true;
+  showTyping();
+  try{
+    const sys=await buildContext();
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,messages:chatHistory})
+    });
+    const data=await res.json();
+    removeTyping();
+    if(data.error){ appendBubble('assistant','⚠️ API error: '+data.error.message); return; }
+    const reply=data.content?.[0]?.text||'No response.';
+    chatHistory.push({role:'assistant',content:reply});
+    appendBubble('assistant',reply);
+  }catch(err){
+    removeTyping();
+    appendBubble('assistant','⚠️ Could not reach Claude API. Check your network connection.');
+  }finally{ document.getElementById('ai-btn').disabled=false; }
+}
+
+function clearChat(){ chatHistory=[]; document.getElementById('chat-messages').innerHTML='<div class="chat-ai">Chat cleared. Ask me anything about your PURITY database!</div>'; }
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+async function init(){
+  initDB();
+  // Seed demo data only once per session (MEM.seeded guards it)
+  if(!MEM.seeded){
+    MEM.seeded = true;
+    try{ localStorage.setItem('pur_seeded','1'); }catch(e){}
+    // Only add demo products if store is empty
+    if(MEM.products.length === 0){
+      var demos=[
+        {name:'PURITY Long Grain Rice 50kg',cost:22000,sell:26500,category:'Rice',status:'Active',notes:''},
+        {name:'PURITY Parboiled Rice 25kg',cost:11500,sell:13800,category:'Rice',status:'Active',notes:''},
+        {name:'PURITY Basmati Premium 5kg',cost:7200,sell:8500,category:'Rice',status:'Low Stock',notes:'Reorder pending'},
+        {name:'PURITY Ofada Rice 5kg',cost:5800,sell:6800,category:'Rice',status:'Active',notes:''},
+        {name:'PURITY Brown Rice 10kg',cost:9500,sell:11200,category:'Rice',status:'Active',notes:''},
+      ];
+      for(var i=0;i<demos.length;i++) await dbAdd('products', demos[i]);
+      toast('5 demo products loaded!');
+    }
+  }
+  await updateDBBadge();
+  showPage('dashboard');
+}
+
+
+// ══════════════════════════════════════
+// Product table event delegation
+// ══════════════════════════════════════
+let pendingDelId = null;
+
+function closeDelModal(){
+  document.getElementById('del-modal').style.display='none';
+  pendingDelId = null;
+}
+
+function openDelModal(product, name){
+  document.getElementById('del-modal-name').textContent = 'Delete "' + name + '"? This cannot be undone.';
+  document.getElementById('del-modal-confirm').onclick = async function(){
+    closeDelModal();
+    // Delete by filtering window._PURITY.products directly using object reference
+    var before = window._PURITY.products.length;
+    window._PURITY.products = window._PURITY.products.filter(function(r){ return r !== product; });
+    MEM.products = window._PURITY.products;
+    save('products');
+    console.log('Deleted by reference. Before:'+before+' After:'+window._PURITY.products.length);
+    toast('Product deleted.');
+    await renderProducts();
+    await updateDBBadge();
+  };
+  document.getElementById('del-modal').style.display='flex';
+}
+
+// Event listeners attached directly in renderProducts()
+
+
+// ══════════════════════════════════════
+// Stock Adjustment
+// ══════════════════════════════════════
+let _stockProduct = null;
+let _adjType = 'add';
+
+function setAdjType(type){
+  _adjType = type;
+  ['add','remove','set'].forEach(function(t){
+    const btn = document.getElementById('adj-'+t);
+    if(t===type){
+      btn.style.borderColor='#2d5a27'; btn.style.background='#bcf0ae'; btn.style.color='#154212';
+    } else {
+      btn.style.borderColor='#c2c9bb'; btn.style.background='#fff'; btn.style.color='#72796e';
+    }
+  });
+  updateStockPreview();
+}
+
+function updateStockPreview(){
+  const qty = parseInt(document.getElementById('stock-modal-qty').value)||0;
+  const cur = _stockProduct ? (_stockProduct.stock||0) : 0;
+  let newVal = cur;
+  if(_adjType==='add') newVal = cur + qty;
+  else if(_adjType==='remove') newVal = Math.max(0, cur - qty);
+  else if(_adjType==='set') newVal = qty;
+  const prev = document.getElementById('stock-modal-preview');
+  const el = document.getElementById('stock-modal-new');
+  if(qty>0||_adjType==='set'){ 
+    el.textContent = newVal + ' units';
+    el.style.color = newVal<=0?'#ba1a1a':newVal<=(_stockProduct&&_stockProduct.lowStock||10)?'#d97706':'#154212';
+    prev.style.display='flex'; 
+  } else { prev.style.display='none'; }
+}
+
+function openStockModal(p){
+  _stockProduct = p;
+  _adjType = 'add';
+  document.getElementById('stock-modal-name').textContent = p.name;
+  document.getElementById('stock-modal-current').textContent = (p.stock||0)+' units';
+  document.getElementById('stock-modal-qty').value = '0';
+  document.getElementById('stock-modal-preview').style.display='none';
+  setAdjType('add');
+  // wire qty input
+  document.getElementById('stock-modal-qty').oninput = updateStockPreview;
+  openM('stock-modal');
+}
+
+async function saveStockAdj(){
+  if(!_stockProduct){ closeM('stock-modal'); return; }
+  const qty = parseInt(document.getElementById('stock-modal-qty').value)||0;
+  const cur = _stockProduct.stock||0;
+  let newStock = cur;
+  if(_adjType==='add') newStock = cur + qty;
+  else if(_adjType==='remove') newStock = Math.max(0, cur - qty);
+  else if(_adjType==='set') newStock = qty;
+  _stockProduct.stock = newStock;
+  // Auto-update status
+  const low = _stockProduct.lowStock || 10;
+  if(newStock <= 0) _stockProduct.status = 'Inactive';
+  else if(newStock <= low) _stockProduct.status = 'Low Stock';
+  else _stockProduct.status = 'Active';
+  save('products');
+  toast('Stock updated! New level: '+newStock+' units.');
+  closeM('stock-modal');
+  await renderProducts();
+  await updateDBBadge();
+}
+
+init().catch(console.error);
+</script>
+
+<!-- Delete Confirm Modal -->
+<div id="del-modal" class="modal-bg" style="display:none;z-index:200">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 fade-in overflow-hidden">
+    <div class="px-6 pt-6 pb-2 flex flex-col items-center text-center">
+      <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-3">
+        <span class="material-symbols-outlined text-[#ba1a1a] text-[28px] fill-icon">delete</span>
+      </div>
+      <h3 class="font-manrope font-bold text-lg text-stone-800">Delete Product?</h3>
+      <p class="text-sm text-stone-500 mt-1 mb-4" id="del-modal-name">This cannot be undone.</p>
+    </div>
+    <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#f5f3f3] flex gap-3 justify-center">
+      <button onclick="closeDelModal()" class="flex-1 py-2.5 border border-[#c2c9bb] bg-white rounded-full text-sm font-semibold text-stone-600 hover:bg-stone-50">Cancel</button>
+      <button id="del-modal-confirm" class="flex-1 py-2.5 bg-[#ba1a1a] text-white rounded-full text-sm font-semibold shadow hover:bg-red-800">Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Stock Adjust Modal -->
+<div id="stock-modal" class="modal-bg" style="display:none;z-index:200">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 fade-in overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-5 border-b border-[#D1CDC2] bg-[#F4F1EA]">
+      <div><h3 class="font-manrope font-bold text-lg text-[#154212]">Adjust Stock</h3>
+      <p class="text-xs text-stone-400 mt-0.5" id="stock-modal-name">Product name</p></div>
+      <button onclick="closeM('stock-modal')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-200"><span class="material-symbols-outlined text-stone-500">close</span></button>
+    </div>
+    <div class="px-6 py-6 space-y-4">
+      <div class="bg-[#f5f3f3] rounded-xl p-4 flex items-center justify-between border border-[#D1CDC2]">
+        <span class="text-sm text-stone-500 font-semibold">Current Stock</span>
+        <span class="font-manrope font-bold text-2xl text-[#154212]" id="stock-modal-current">—</span>
+      </div>
+      <div>
+        <label class="label-t">Adjustment Type</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setAdjType('add')" id="adj-add" class="adj-type-btn py-2 rounded-lg border-2 border-[#2d5a27] bg-[#bcf0ae] text-[#154212] text-xs font-bold">+ Add Stock</button>
+          <button onclick="setAdjType('remove')" id="adj-remove" class="adj-type-btn py-2 rounded-lg border-2 border-stone-200 bg-white text-stone-500 text-xs font-bold">− Remove</button>
+          <button onclick="setAdjType('set')" id="adj-set" class="adj-type-btn py-2 rounded-lg border-2 border-stone-200 bg-white text-stone-500 text-xs font-bold">= Set Exact</button>
+        </div>
+      </div>
+      <div>
+        <label class="label-t">Quantity</label>
+        <input id="stock-modal-qty" type="number" min="0" value="0" class="inp" placeholder="Enter quantity"/>
+      </div>
+      <div id="stock-modal-preview" class="hidden bg-[#f5f3f3] rounded-lg px-4 py-3 flex items-center justify-between border border-[#D1CDC2]">
+        <span class="text-xs text-stone-500 font-semibold">New Stock Level</span>
+        <span id="stock-modal-new" class="font-manrope font-bold text-lg text-[#154212]">—</span>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#f5f3f3] flex justify-between">
+      <button onclick="closeM('stock-modal')" class="px-5 py-2.5 border border-[#c2c9bb] bg-white rounded-full text-sm font-semibold text-stone-600">Cancel</button>
+      <button onclick="saveStockAdj()" class="flex items-center gap-2 px-6 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow"><span class="material-symbols-outlined text-[18px]">save</span>Save</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
