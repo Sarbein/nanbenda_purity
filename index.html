@@ -38,6 +38,7 @@ tailwind.config = {
   .chip-red{background:#ffdad6;color:#ba1a1a}
   .chip-grey{background:#e4e2e2;color:#42493e}
   @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .fade-in{animation:fadeIn .25s ease both}
   .toast{position:fixed;bottom:24px;right:24px;background:#2d5a27;color:#fff;border-radius:.5rem;padding:13px 20px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 4px 24px rgba(21,66,18,.22);display:none;align-items:center;gap:8px}
   .toast.show{display:flex;animation:fadeIn .2s ease both}
@@ -71,6 +72,7 @@ tailwind.config = {
   </div>
   <div class="flex items-center gap-1">
     <button onclick="showPage('ai')" class="material-symbols-outlined text-[#2d5a27] hover:bg-stone-200/60 p-2 rounded-full transition-colors" title="AI Assistant">smart_toy</button>
+    <button onclick="openSettings()" class="material-symbols-outlined text-stone-500 hover:bg-stone-200/60 p-2 rounded-full transition-colors" title="Database Settings">settings</button>
     <button class="material-symbols-outlined text-stone-500 hover:bg-stone-200/60 p-2 rounded-full transition-colors">notifications</button>
     <div class="w-8 h-8 rounded-full bg-[#2d5a27] flex items-center justify-center overflow-hidden"><img alt="User" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvOAPc21ZBAdp1APTevuwlaAXJlLtRCFxaWF1itAqc610loxT37XbCLz3LiL8pqcgDEp2_xfvBo5WtAIO8R63SFUu479NpcxenLiGhYxAnNk2oUm7BTjfsdRJoeA-TJvUZqivKbEKTnGCp24OVkvI72iuS-00x-s_5dCAVERyOEHcYsM8i5a9NxbaCKZmdYX4l53ZAM9j0NxfKLi-NlJnJd3kM-6C8xbu-axjV6JaRTq6Hjivl6R_U3tUqCqmdQtp2yAKSkaRO_gQ"/></div>
   </div>
@@ -322,71 +324,106 @@ tailwind.config = {
 
 <script>
 // ══════════════════════════════════════
-// DATABASE — in-memory, session-scoped
-// All data lives in window._PURITY so it
-// survives showPage() calls within the tab.
+// SUPABASE DATABASE LAYER
+// Multi-user shared database
 // ══════════════════════════════════════
-if(!window._PURITY){
-  window._PURITY = { products:[], sales:[], whatsapp:[], invoices:[], seeded:false };
-  // Try to load from localStorage once
+var STORES = ['products','sales','whatsapp','invoices'];
+var SB_URL = '';
+var SB_KEY = '';
+
+function sbLoad(){
   try{
-    ['products','sales','whatsapp','invoices'].forEach(function(s){
-      var raw = localStorage.getItem('pur_'+s);
-      if(raw) window._PURITY[s] = JSON.parse(raw);
-    });
-    if(localStorage.getItem('pur_seeded')==='1') window._PURITY.seeded = true;
+    SB_URL = localStorage.getItem('sb_url')||'';
+    SB_KEY = localStorage.getItem('sb_key')||'';
   }catch(e){}
 }
-var MEM = window._PURITY;
-var STORES = ['products','sales','whatsapp','invoices'];
 
-function newId(){ return Date.now() + Math.floor(Math.random()*999); }
-
-function save(store){
-  try{ localStorage.setItem('pur_'+store, JSON.stringify(MEM[store])); }catch(e){}
+function sbSave(url, key){
+  SB_URL = url; SB_KEY = key;
+  try{ localStorage.setItem('sb_url', url); localStorage.setItem('sb_key', key); }catch(e){}
 }
 
-function getAll(store){
-  // Always read from window._PURITY directly — never a stale reference
-  var arr = window._PURITY[store] || [];
-  return Promise.resolve(arr.map(function(r){ return Object.assign({},r); }));
+function sbReady(){ return SB_URL && SB_KEY; }
+
+function sbHeaders(){
+  return {
+    'Content-Type': 'application/json',
+    'apikey': SB_KEY,
+    'Authorization': 'Bearer ' + SB_KEY,
+    'Prefer': 'return=representation'
+  };
 }
 
-function dbAdd(store, data){
-  var record = Object.assign({}, data, {id: newId()});
-  MEM[store].push(record);
-  save(store);
-  return Promise.resolve(record.id);
+// Map store names to Supabase table names
+function tbl(store){
+  var map = {products:'products', sales:'sales', whatsapp:'whatsapp_logs', invoices:'invoices'};
+  return map[store] || store;
 }
 
-function dbPut(store, data){
-  var numId = Number(data.id);
-  var idx = MEM[store].findIndex(function(r){ return Number(r.id)===numId; });
-  if(idx>=0) MEM[store][idx] = Object.assign({},data);
-  else MEM[store].push(Object.assign({},data));
-  save(store);
-  return Promise.resolve(data.id);
+async function getAll(store){
+  if(!sbReady()) return [];
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/'+tbl(store)+'?order=created_at.desc&limit=500', {
+      headers: sbHeaders()
+    });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.message||res.status); }
+    return await res.json();
+  }catch(e){ toast('DB read error: '+e.message, true); return []; }
 }
 
-function dbDel(store, id){
-  var numId = Number(id);
-  var before = MEM[store].length;
-  // filter out the deleted record
-  var newArr = [];
-  for(var i=0; i<MEM[store].length; i++){
-    if(Number(MEM[store][i].id) !== numId){
-      newArr.push(MEM[store][i]);
-    }
-  }
-  // write back to BOTH MEM and window._PURITY explicitly
-  MEM[store] = newArr;
-  window._PURITY[store] = newArr;
-  save(store);
-  console.log('dbDel: removed id='+numId+' from '+store+'. Before:'+before+' After:'+MEM[store].length);
-  return Promise.resolve();
+async function dbAdd(store, data){
+  if(!sbReady()) return null;
+  // Remove local id — Supabase generates UUID
+  const body = Object.assign({}, data);
+  delete body.id;
+  body.created_at = new Date().toISOString();
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/'+tbl(store), {
+      method:'POST', headers: sbHeaders(), body: JSON.stringify(body)
+    });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.message||res.status); }
+    const rows = await res.json();
+    return rows[0]||null;
+  }catch(e){ toast('DB add error: '+e.message, true); return null; }
 }
 
-function initDB(){ /* data already loaded into window._PURITY above */ }
+async function dbPut(store, data){
+  if(!sbReady()) return null;
+  const id = data.id;
+  const body = Object.assign({}, data);
+  delete body.id;
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/'+tbl(store)+'?id=eq.'+id, {
+      method:'PATCH', headers: sbHeaders(), body: JSON.stringify(body)
+    });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.message||res.status); }
+    const rows = await res.json();
+    return rows[0]||null;
+  }catch(e){ toast('DB update error: '+e.message, true); return null; }
+}
+
+async function dbDel(store, id){
+  if(!sbReady()) return;
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/'+tbl(store)+'?id=eq.'+id, {
+      method:'DELETE', headers: sbHeaders()
+    });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.message||res.status); }
+  }catch(e){ toast('DB delete error: '+e.message, true); }
+}
+
+// For stock update — patch only stock & status fields on a product
+async function dbPatchProduct(id, fields){
+  if(!sbReady()) return;
+  try{
+    const res = await fetch(SB_URL+'/rest/v1/products?id=eq.'+id, {
+      method:'PATCH', headers: sbHeaders(), body: JSON.stringify(fields)
+    });
+    if(!res.ok){ const e=await res.json(); throw new Error(e.message||res.status); }
+  }catch(e){ toast('Stock update error: '+e.message, true); }
+}
+
+function initDB(){ sbLoad(); }
 
 // ══════════════════════════════════════
 // Helpers
@@ -412,7 +449,7 @@ function openM(id){ const el=document.getElementById(id); el.style.display='flex
 
 async function updateDBBadge(){
   const [p,s,w,i] = await Promise.all(STORES.map(getAll));
-  document.getElementById('db-status-text').textContent='Session DB Active';
+  document.getElementById('db-status-text').textContent = sbReady() ? 'Supabase Connected ✓' : '⚠ Not Connected';
   document.getElementById('db-record-count').textContent=`${p.length} products · ${s.length} sales · ${w.length} logs · ${i.length} invoices`;
 }
 
@@ -449,18 +486,18 @@ function showPage(p){
 // ══════════════════════════════════════
 async function buildDashboard(){
   const [prods,sales]=[await getAll('products'),await getAll('sales')];
-  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0);
-  const cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  const rev=sales.reduce((a,s)=>a+(s.qty*s.price),0);
+  const cost=sales.reduce((a,s)=>a+(s.qty*(s.cost_price||s.costPrice||0)),0);
   document.getElementById('d-products').textContent=prods.length;
   document.getElementById('d-sales').textContent=sales.length;
   document.getElementById('d-revenue').textContent=fmt(rev);
   document.getElementById('d-profit').textContent=fmt(rev-cost);
-  const recent=[...sales].sort((a,b)=>b.id-a.id).slice(0,5);
+  const recent=[...sales].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
   const tbody=document.getElementById('d-recent');
   tbody.innerHTML=recent.length?recent.map((s,i)=>`
     <tr style="${rowBg(i)}" class="border-b border-[#D1CDC2]">
-      <td class="px-6 py-3 text-xs text-stone-500">${s.date}</td>
-      <td class="px-6 py-3 font-medium text-stone-800">${s.productName}</td>
+      <td class="px-6 py-3 text-xs text-stone-500">${s.date||''}</td>
+      <td class="px-6 py-3 font-medium text-stone-800">${s.product_name||s.productName||''}</td>
       <td class="px-6 py-3 text-stone-600">${s.customer||'—'}</td>
       <td class="px-6 py-3 text-right">${s.qty}</td>
       <td class="px-6 py-3 text-right font-semibold text-[#154212]">${fmt(s.qty*s.price)}</td>
@@ -580,16 +617,14 @@ async function saveProduct(){
     if(costRaw===''||isNaN(cost)){ toast('Enter a valid cost price.',true); return; }
     if(sellRaw===''||isNaN(sell)){ toast('Enter a valid selling price.',true); return; }
     const data = {
-      name, cost, sell, stock, lowStock,
+      name, cost, sell, stock,
+      low_stock: lowStock,
       category: document.getElementById('pm-cat').value,
       status: document.getElementById('pm-status').value,
       notes: document.getElementById('pm-notes').value.trim()
     };
     if(id){
-      // Preserve existing stock if editing — only update stock if field was changed
-      const existing = window._PURITY.products.find(p=>Number(p.id)===Number(id));
-      if(existing) data.stock = stock; // keep whatever user entered
-      await dbPut('products', {...data, id: Number(id)});
+      await dbPut('products', {...data, id: id});
       toast('Product updated!');
     } else {
       await dbAdd('products', data);
@@ -612,7 +647,7 @@ async function saveProduct(){
 async function openSaleModal(){
   const prods=await getAll('products');
   const sel=document.getElementById('sm-product');
-  sel.innerHTML='<option value="">— Select product —</option>'+prods.map(p=>`<option value="${p.id}" data-price="${p.sell}" data-cost="${p.cost}" data-stock="${p.stock!==undefined?p.stock:''}">${p.name}${p.stock!==undefined?' (Stock: '+p.stock+')'  :''}</option>`).join('');
+  sel.innerHTML='<option value="">— Select product —</option>'+prods.map(p=>`<option value="${p.id}" data-price="${p.sell}" data-cost="${p.cost}" data-stock="${p.stock!==undefined?p.stock:''}">${p.name}${p.stock!==undefined?' (Stock: '+p.stock+')':''}</option>`).join('');
   document.getElementById('sm-stock-info').style.display='none';
   document.getElementById('sm-qty').value=1;
   document.getElementById('sm-price').value='';
@@ -648,42 +683,45 @@ async function saveSale(){
   const qty=parseFloat(document.getElementById('sm-qty').value), price=parseFloat(document.getElementById('sm-price').value);
   if(!qty||!price){ toast('Enter quantity and price.',true); return; }
   // Find product and check stock
-  const prod = window._PURITY.products.find(function(p){ return Number(p.id)===pid; });
+  const allProds = await getAll('products');
+  const pidStr = String(pid);
+  const prod = allProds.find(function(p){ return String(p.id)===pidStr; });
   if(prod && prod.stock !== undefined){
-    if(prod.stock < qty){
+    if(Number(prod.stock) < qty){
       toast('Insufficient stock! Available: '+prod.stock+' units.',true); return;
     }
-    // Deduct stock
-    prod.stock = prod.stock - qty;
-    // Auto-update status based on stock level
-    const low = prod.lowStock || 10;
-    if(prod.stock <= 0) prod.status = 'Inactive';
-    else if(prod.stock <= low) prod.status = 'Low Stock';
-    else prod.status = 'Active';
-    save('products');
+    // Deduct stock via Supabase patch
+    const newStock = Number(prod.stock) - qty;
+    const low = prod.low_stock || prod.lowStock || 10;
+    const newStatus = newStock<=0?'Inactive':newStock<=low?'Low Stock':'Active';
+    await dbPatchProduct(prod.id, {stock: newStock, status: newStatus});
   }
-  await dbAdd('sales',{productId:pid,productName:opt.textContent,qty,price,costPrice:parseFloat(opt.dataset.cost)||0,customer:document.getElementById('sm-customer').value.trim(),date:document.getElementById('sm-date').value||today(),notes:document.getElementById('sm-notes').value.trim(),createdAt:new Date().toISOString()});
+  await dbAdd('sales',{product_id:String(pid),product_name:opt.textContent.split(' (Stock:')[0],qty,price,cost_price:parseFloat(opt.dataset.cost)||0,customer:document.getElementById('sm-customer').value.trim(),date:document.getElementById('sm-date').value||today(),notes:document.getElementById('sm-notes').value.trim()});
   toast('Sale recorded! Stock updated.'); closeM('sm'); renderSales(); updateDBBadge();
 }
 
 async function renderSales(){
-  const sales=await getAll('sales'), sorted=[...sales].sort((a,b)=>b.id-a.id);
-  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0), cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  const sales=await getAll('sales');
+  const sorted=[...sales].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const rev=sales.reduce((a,s)=>a+(s.qty*s.price),0);
+  const cost=sales.reduce((a,s)=>a+(s.qty*(s.cost_price||s.costPrice||0)),0);
   document.getElementById('s-count').textContent=sales.length;
   document.getElementById('s-rev').textContent=fmt(rev);
   document.getElementById('s-profit').textContent=fmt(rev-cost);
   const tbody=document.getElementById('sales-tbody');
   tbody.innerHTML=sorted.length?sorted.map((s,i)=>{
-    const total=s.qty*s.price, profit=total-s.qty*(s.costPrice||0);
+    const total=s.qty*s.price;
+    const profit=total-s.qty*(s.cost_price||s.costPrice||0);
+    const name=s.product_name||s.productName||'';
     return `<tr style="${rowBg(i)}" class="border-b border-[#D1CDC2]">
-      <td class="px-6 py-3 text-xs text-stone-500">${s.date}</td>
-      <td class="px-6 py-3 font-medium text-stone-800">${s.productName}</td>
+      <td class="px-6 py-3 text-xs text-stone-500">${s.date||''}</td>
+      <td class="px-6 py-3 font-medium text-stone-800">${name}</td>
       <td class="px-6 py-3 text-stone-600">${s.customer||'—'}</td>
       <td class="px-6 py-3 text-right">${s.qty}</td>
       <td class="px-6 py-3 text-right text-stone-600">${fmt(s.price)}</td>
       <td class="px-6 py-3 text-right font-semibold text-[#154212]">${fmt(total)}</td>
       <td class="px-6 py-3 text-right font-semibold" style="color:#16a34a">${fmt(profit)}</td>
-      <td class="px-6 py-3 text-center"><button onclick="delSale(${s.id})" class="p-1 rounded hover:bg-red-50"><span class="material-symbols-outlined text-[17px] text-red-400">delete</span></button></td>
+      <td class="px-6 py-3 text-center" data-saleid="${s.id}"><button class="sale-del p-1 rounded hover:bg-red-50"><span class="material-symbols-outlined text-[17px] text-red-400">delete</span></button></td>
     </tr>`;
   }).join(''):'<tr><td colspan="8" class="px-6 py-10 text-center text-stone-400">No sales yet.</td></tr>';
 }
@@ -719,7 +757,7 @@ async function renderWA(){
   list.innerHTML=sorted.map((l,i)=>{
     const ini=l.customer.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const bg=i%2===0?'background:#bcf0ae;color:#154212':'background:#ffdcbf;color:#7e562e';
-    const when=new Date(l.createdAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const when=new Date(l.created_at||l.createdAt||Date.now()).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
     return `<div style="${i%2?'background:#f5f3f3':''}" class="px-6 py-4 flex items-start gap-4">
       <div style="width:36px;height:36px;border-radius:50%;${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:Manrope;font-weight:700;font-size:13px">${ini}</div>
       <div style="flex:1;min-width:0">
@@ -729,7 +767,7 @@ async function renderWA(){
           </div>
         </div>
         <p class="text-sm text-stone-600 mt-0.5" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.message||'—'}</p>
-        <div class="flex items-center gap-2 mt-1.5">${chip(l.status)}<span class="text-xs text-stone-400">${l.productName||''}</span></div>
+        <div class="flex items-center gap-2 mt-1.5">${chip(l.status)}<span class="text-xs text-stone-400">${l.product_name||l.productName||''}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -751,7 +789,7 @@ async function saveInvoice(){
   const customer=document.getElementById('inv-customer').value.trim();
   const amount=parseFloat(document.getElementById('inv-amount').value);
   if(!customer||isNaN(amount)){ toast('Fill required fields.',true); return; }
-  await dbAdd('invoices',{ref:'INV-'+String(Date.now()).slice(-5),customer,description:document.getElementById('inv-desc').value.trim(),amount,status:document.getElementById('inv-status').value,date:document.getElementById('inv-date').value||today(),createdAt:new Date().toISOString()});
+  await dbAdd('invoices',{ref:'INV-'+String(Date.now()).slice(-5),customer,description:document.getElementById('inv-desc').value.trim(),amount,status:document.getElementById('inv-status').value,date:document.getElementById('inv-date').value||today()});
   toast('Invoice saved!'); closeM('invm'); renderFinance(); updateDBBadge();
 }
 
@@ -781,10 +819,9 @@ async function renderFinance(){
 }
 
 async function togglePaid(id,cur){
-  const invs=await getAll('invoices'), inv=invs.find(i=>i.id===id);
-  if(!inv) return;
-  inv.status=cur==='Paid'?'Unpaid':'Paid';
-  await dbPut('invoices',inv); toast(`Marked ${inv.status}.`); renderFinance();
+  const newStatus = cur==='Paid'?'Unpaid':'Paid';
+  await dbPut('invoices',{id, status:newStatus});
+  toast('Marked '+newStatus+'.'); renderFinance();
 }
 
 async function delInvoice(id){ if(!confirm('Delete invoice?')) return; await dbDel('invoices',id); toast('Deleted.'); renderFinance(); updateDBBadge(); }
@@ -794,8 +831,8 @@ async function delInvoice(id){ if(!confirm('Delete invoice?')) return; await dbD
 // ══════════════════════════════════════
 async function buildReports(){
   const [sales,prods]=[await getAll('sales'),await getAll('products')];
-  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0);
-  const cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  const rev=sales.reduce((a,s)=>a+(s.qty*s.price),0);
+  const cost=sales.reduce((a,s)=>a+(s.qty*(s.cost_price||s.costPrice||0)),0);
   const profit=rev-cost;
   const margin=rev>0?(profit/rev*100).toFixed(1):0;
   document.getElementById('r-revenue').textContent=fmt(rev);
@@ -803,7 +840,7 @@ async function buildReports(){
   document.getElementById('r-profit').textContent=fmt(profit);
   document.getElementById('r-margin').textContent=margin+'%';
   const map={};
-  sales.forEach(s=>{ if(!map[s.productName]) map[s.productName]={name:s.productName,units:0,rev:0,profit:0}; map[s.productName].units+=s.qty; map[s.productName].rev+=s.qty*s.price; map[s.productName].profit+=s.qty*s.price-s.qty*(s.costPrice||0); });
+  sales.forEach(s=>{ const n=s.product_name||s.productName||'?'; if(!map[n]) map[n]={name:n,units:0,rev:0,profit:0}; map[n].units+=s.qty; map[n].rev+=s.qty*s.price; map[n].profit+=s.qty*s.price-s.qty*(s.cost_price||s.costPrice||0); });
   const sorted=Object.values(map).sort((a,b)=>b.rev-a.rev);
   const tbody=document.getElementById('r-prod-tbody');
   tbody.innerHTML=sorted.length?sorted.map((p,i)=>{
@@ -825,8 +862,8 @@ let chatHistory=[];
 
 async function buildContext(){
   const [prods,sales,wa,invs]=await Promise.all(STORES.map(getAll));
-  const rev=sales.reduce((a,s)=>a+s.qty*s.price,0);
-  const cost=sales.reduce((a,s)=>a+s.qty*(s.costPrice||0),0);
+  const rev=sales.reduce((a,s)=>a+(s.qty*s.price),0);
+  const cost=sales.reduce((a,s)=>a+(s.qty*(s.cost_price||s.costPrice||0)),0);
   const profit=rev-cost;
   const margin=rev>0?(profit/rev*100).toFixed(1):0;
 
@@ -925,22 +962,10 @@ function clearChat(){ chatHistory=[]; document.getElementById('chat-messages').i
 // ══════════════════════════════════════
 async function init(){
   initDB();
-  // Seed demo data only once per session (MEM.seeded guards it)
-  if(!MEM.seeded){
-    MEM.seeded = true;
-    try{ localStorage.setItem('pur_seeded','1'); }catch(e){}
-    // Only add demo products if store is empty
-    if(MEM.products.length === 0){
-      var demos=[
-        {name:'PURITY Long Grain Rice 50kg',cost:22000,sell:26500,category:'Rice',status:'Active',notes:''},
-        {name:'PURITY Parboiled Rice 25kg',cost:11500,sell:13800,category:'Rice',status:'Active',notes:''},
-        {name:'PURITY Basmati Premium 5kg',cost:7200,sell:8500,category:'Rice',status:'Low Stock',notes:'Reorder pending'},
-        {name:'PURITY Ofada Rice 5kg',cost:5800,sell:6800,category:'Rice',status:'Active',notes:''},
-        {name:'PURITY Brown Rice 10kg',cost:9500,sell:11200,category:'Rice',status:'Active',notes:''},
-      ];
-      for(var i=0;i<demos.length;i++) await dbAdd('products', demos[i]);
-      toast('5 demo products loaded!');
-    }
+  if(!sbReady()){
+    // Show setup screen if no Supabase credentials
+    showSetupScreen();
+    return;
   }
   await updateDBBadge();
   showPage('dashboard');
@@ -961,12 +986,7 @@ function openDelModal(product, name){
   document.getElementById('del-modal-name').textContent = 'Delete "' + name + '"? This cannot be undone.';
   document.getElementById('del-modal-confirm').onclick = async function(){
     closeDelModal();
-    // Delete by filtering window._PURITY.products directly using object reference
-    var before = window._PURITY.products.length;
-    window._PURITY.products = window._PURITY.products.filter(function(r){ return r !== product; });
-    MEM.products = window._PURITY.products;
-    save('products');
-    console.log('Deleted by reference. Before:'+before+' After:'+window._PURITY.products.length);
+    await dbDel('products', product.id);
     toast('Product deleted.');
     await renderProducts();
     await updateDBBadge();
@@ -1028,23 +1048,135 @@ function openStockModal(p){
 async function saveStockAdj(){
   if(!_stockProduct){ closeM('stock-modal'); return; }
   const qty = parseInt(document.getElementById('stock-modal-qty').value)||0;
-  const cur = _stockProduct.stock||0;
+  const cur = Number(_stockProduct.stock)||0;
   let newStock = cur;
   if(_adjType==='add') newStock = cur + qty;
   else if(_adjType==='remove') newStock = Math.max(0, cur - qty);
   else if(_adjType==='set') newStock = qty;
-  _stockProduct.stock = newStock;
-  // Auto-update status
-  const low = _stockProduct.lowStock || 10;
-  if(newStock <= 0) _stockProduct.status = 'Inactive';
-  else if(newStock <= low) _stockProduct.status = 'Low Stock';
-  else _stockProduct.status = 'Active';
-  save('products');
+  const low = _stockProduct.low_stock || _stockProduct.lowStock || 10;
+  const newStatus = newStock<=0?'Inactive':newStock<=low?'Low Stock':'Active';
+  await dbPatchProduct(_stockProduct.id, {stock: newStock, status: newStatus});
   toast('Stock updated! New level: '+newStock+' units.');
   closeM('stock-modal');
   await renderProducts();
   await updateDBBadge();
 }
+
+
+// ══════════════════════════════════════
+// Supabase Setup Screen
+// ══════════════════════════════════════
+function isInIframe(){
+  try { return window.self !== window.top; } catch(e){ return true; }
+}
+
+function showErr(msg){
+  const el = document.getElementById('setup-error');
+  el.innerHTML = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function showSetupScreen(){
+  document.getElementById('setup-screen').style.display = 'block';
+  // Show iframe warning if running inside a sandboxed preview
+  const banner = document.getElementById('iframe-banner');
+  if(banner) banner.style.display = isInIframe() ? 'block' : 'none';
+}
+function hideSetupScreen(){
+  document.getElementById('setup-screen').style.display = 'none';
+}
+
+function copySQL(){
+  const txt = document.getElementById('setup-sql').textContent;
+  navigator.clipboard.writeText(txt)
+    .then(function(){ toast('SQL copied to clipboard!'); })
+    .catch(function(){ toast('Copy failed — please select and copy manually.', true); });
+}
+
+function toggleKeyVis(){
+  const ta = document.getElementById('setup-key');
+  const btn = document.getElementById('key-vis-btn');
+  const isBlurred = ta.style.filter && ta.style.filter !== 'none';
+  ta.style.filter = isBlurred ? 'none' : 'blur(4px)';
+  btn.textContent = isBlurred ? 'Hide' : 'Show';
+}
+
+async function connectSupabase(){
+  const url = document.getElementById('setup-url').value.trim().replace(/\/+$/, '');
+  const key = document.getElementById('setup-key').value.trim().replace(/\s+/g, '');
+  showErr('');
+  if(!url){ showErr('Please enter your Supabase Project URL.'); return; }
+  if(!key){ showErr('Please enter your Anon API key.'); return; }
+  if(!url.startsWith('https://')){ showErr('URL must start with https://'); return; }
+
+  const btn = document.getElementById('setup-btn');
+  btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px"></span> Connecting…';
+  btn.disabled = true;
+
+  try{
+    const res = await fetch(url + '/rest/v1/products?limit=1', {
+      method: 'GET',
+      headers: {
+        'apikey': key,
+        'Authorization': 'Bearer ' + key,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if(res.status === 401){
+      throw new Error('Invalid API key. Check you are using the anon key, not service_role.');
+    }
+    if(res.status === 404){
+      throw new Error('Project URL not found. Check your Supabase URL.');
+    }
+    if(!res.ok){
+      let msg = 'Connection failed (' + res.status + ')';
+      try{ const e = await res.json(); msg = e.message || e.hint || msg; }catch(_){}
+      throw new Error(msg);
+    }
+
+    // Success
+    sbSave(url, key);
+    hideSetupScreen();
+    await updateDBBadge();
+    showPage('dashboard');
+    toast('✓ Connected to Supabase! Database is live and shared.');
+  } catch(e){
+    let msg = e.message || String(e);
+    if(msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror') || msg.toLowerCase().includes('load')){
+      msg = '❌ <strong>Network blocked.</strong> This app cannot connect to Supabase while running inside the Claude preview.<br><br>'
+          + '✅ <strong>Fix:</strong> Download the file and open it directly in your browser (Chrome, Firefox, Edge).<br>'
+          + 'Double-click the downloaded <code style="background:#ffdad6;padding:1px 4px;border-radius:3px">purity_nanbenda.html</code> file — it will work perfectly.';
+    } else {
+      msg = '❌ ' + msg;
+    }
+    showErr(msg);
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;vertical-align:middle;margin-right:6px">database</span> Connect & Open App';
+    btn.disabled = false;
+  }
+}
+
+// Settings button to re-open setup
+function openSettings(){
+  document.getElementById('setup-url').value = SB_URL || '';
+  document.getElementById('setup-key').value = SB_KEY || '';
+  showErr('');
+  showSetupScreen();
+}
+
+// Event delegation for sales delete (ids are UUIDs from Supabase)
+document.addEventListener('click', function(e){
+  const delBtn = e.target.closest('.sale-del');
+  if(delBtn){
+    const td = delBtn.closest('td[data-saleid]');
+    if(td){
+      const sid = td.getAttribute('data-saleid');
+      if(confirm('Delete this sale?')){ 
+        dbDel('sales', sid).then(function(){ renderSales(); updateDBBadge(); toast('Sale deleted.'); });
+      }
+    }
+  }
+});
 
 init().catch(console.error);
 </script>
@@ -1100,6 +1232,144 @@ init().catch(console.error);
     <div class="px-6 py-4 border-t border-[#D1CDC2] bg-[#f5f3f3] flex justify-between">
       <button onclick="closeM('stock-modal')" class="px-5 py-2.5 border border-[#c2c9bb] bg-white rounded-full text-sm font-semibold text-stone-600">Cancel</button>
       <button onclick="saveStockAdj()" class="flex items-center gap-2 px-6 py-2.5 bg-[#2d5a27] text-white rounded-full text-sm font-semibold shadow"><span class="material-symbols-outlined text-[18px]">save</span>Save</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Supabase Setup Screen -->
+<div id="setup-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:#fbf9f8;overflow-y:auto">
+  <div style="min-height:100%;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px 60px">
+    <div style="width:100%;max-width:460px">
+
+      <!-- Iframe Warning Banner -->
+      <div id="iframe-banner" style="display:none;background:#fff3cd;border:1.5px solid #f0c040;border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#7a5c00;line-height:1.6">
+        <strong>⚠️ Running inside Claude preview</strong><br>
+        Supabase connections are blocked here due to browser security (CORS).<br>
+        <strong>Download this file and open it directly in Chrome/Firefox/Edge</strong> — it will connect perfectly.
+      </div>
+
+      <!-- Logo -->
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="width:64px;height:64px;border-radius:16px;background:#2d5a27;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 4px 16px rgba(21,66,18,.25)">
+          <span class="material-symbols-outlined fill-icon" style="color:#fff;font-size:32px">eco</span>
+        </div>
+        <h1 style="font-family:Manrope;font-weight:800;font-size:28px;color:#154212;margin:0">PURITY</h1>
+        <p style="font-size:13px;color:#72796e;margin:4px 0 0">Nanbenda Barters LLC</p>
+      </div>
+
+      <!-- Step 1: Credentials -->
+      <div style="background:#fff;border:1px solid #c2c9bb;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06);margin-bottom:16px">
+        <div style="background:#F4F1EA;padding:18px 24px;border-bottom:1px solid #D1CDC2">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:28px;height:28px;border-radius:50%;background:#2d5a27;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center">1</div>
+            <div>
+              <h2 style="font-family:Manrope;font-weight:700;font-size:16px;color:#154212;margin:0">Enter Supabase Credentials</h2>
+              <p style="font-size:11px;color:#72796e;margin:2px 0 0">Get these from your Supabase project → Settings → API</p>
+            </div>
+          </div>
+        </div>
+        <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#72796e;margin-bottom:6px">Project URL</label>
+            <input id="setup-url" type="url" autocomplete="off" spellcheck="false"
+              style="width:100%;padding:10px 14px;border:1.5px solid #c2c9bb;border-radius:8px;font-size:13px;color:#1b1c1c;background:#fff;box-sizing:border-box;font-family:monospace"
+              placeholder="https://xxxxxxxxxxxx.supabase.co"/>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#72796e">Anon Public Key</label>
+              <button onclick="toggleKeyVis()" id="key-vis-btn" style="font-size:11px;color:#2d5a27;font-weight:600;background:none;border:none;cursor:pointer;padding:0">Show</button>
+            </div>
+            <textarea id="setup-key" rows="3" autocomplete="off" spellcheck="false"
+              style="width:100%;padding:10px 14px;border:1.5px solid #c2c9bb;border-radius:8px;font-size:11px;color:#1b1c1c;background:#fff;box-sizing:border-box;resize:vertical;font-family:monospace;line-height:1.5;filter:blur(4px)"
+              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+            <p style="font-size:10px;color:#72796e;margin:4px 0 0">Paste the full <strong>anon</strong> key (not service_role). Tap Show to reveal.</p>
+          </div>
+          <div id="setup-error" style="display:none;background:#ffdad6;border:1px solid #f5c2be;border-radius:8px;padding:10px 14px;font-size:13px;color:#ba1a1a"></div>
+          <button onclick="connectSupabase()" id="setup-btn"
+            style="width:100%;padding:13px;background:#2d5a27;color:#fff;border:none;border-radius:99px;font-size:14px;font-family:Manrope;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(21,66,18,.2)">
+            <span class="material-symbols-outlined" style="font-size:18px">database</span> Connect & Open App
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: SQL Setup -->
+      <div style="background:#fff;border:1px solid #c2c9bb;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+        <div style="background:#F4F1EA;padding:18px 24px;border-bottom:1px solid #D1CDC2">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:28px;height:28px;border-radius:50%;background:#2d5a27;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center">2</div>
+            <div>
+              <h2 style="font-family:Manrope;font-weight:700;font-size:16px;color:#154212;margin:0">First-Time DB Setup</h2>
+              <p style="font-size:11px;color:#72796e;margin:2px 0 0">Run this SQL once in Supabase → SQL Editor to create all tables</p>
+            </div>
+          </div>
+        </div>
+        <div style="padding:20px 24px">
+          <ol style="margin:0 0 16px;padding:0 0 0 4px;list-style:none;display:flex;flex-direction:column;gap:8px">
+            <li style="display:flex;gap:10px;font-size:12px;color:#42493e"><span style="width:20px;height:20px;border-radius:50%;background:#bcf0ae;color:#154212;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">→</span>Go to <strong>supabase.com</strong> → create a free project</li>
+            <li style="display:flex;gap:10px;font-size:12px;color:#42493e"><span style="width:20px;height:20px;border-radius:50%;background:#bcf0ae;color:#154212;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">→</span>Click <strong>SQL Editor</strong> in the left sidebar</li>
+            <li style="display:flex;gap:10px;font-size:12px;color:#42493e"><span style="width:20px;height:20px;border-radius:50%;background:#bcf0ae;color:#154212;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">→</span>Copy the SQL below, paste and click <strong>Run</strong></li>
+          </ol>
+          <div style="position:relative">
+            <pre id="setup-sql" style="background:#f5f3f3;border:1px solid #D1CDC2;border-radius:8px;padding:14px;font-size:10px;color:#42493e;overflow-x:auto;line-height:1.6;margin:0;white-space:pre">create table products (
+  id uuid default gen_random_uuid() primary key,
+  name text not null,
+  cost numeric default 0,
+  sell numeric default 0,
+  stock integer default 0,
+  low_stock integer default 10,
+  category text default 'Rice',
+  status text default 'Active',
+  notes text,
+  created_at timestamptz default now()
+);
+create table sales (
+  id uuid default gen_random_uuid() primary key,
+  product_id uuid,
+  product_name text,
+  qty numeric,
+  price numeric,
+  cost_price numeric,
+  customer text,
+  date date,
+  notes text,
+  created_at timestamptz default now()
+);
+create table whatsapp_logs (
+  id uuid default gen_random_uuid() primary key,
+  customer text,
+  message text,
+  product_name text,
+  status text default 'Pending',
+  created_at timestamptz default now()
+);
+create table invoices (
+  id uuid default gen_random_uuid() primary key,
+  ref text,
+  customer text,
+  description text,
+  amount numeric,
+  status text default 'Unpaid',
+  date date,
+  created_at timestamptz default now()
+);
+alter table products enable row level security;
+alter table sales enable row level security;
+alter table whatsapp_logs enable row level security;
+alter table invoices enable row level security;
+create policy "Allow all" on products for all using (true) with check (true);
+create policy "Allow all" on sales for all using (true) with check (true);
+create policy "Allow all" on whatsapp_logs for all using (true) with check (true);
+create policy "Allow all" on invoices for all using (true) with check (true);</pre>
+            <button onclick="copySQL()"
+              style="position:absolute;top:10px;right:10px;background:#2d5a27;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">
+              Copy SQL
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
