@@ -508,7 +508,7 @@ async function buildDashboard(){
 // Products
 // ══════════════════════════════════════
 async function renderProducts(){
-  const all = window._PURITY.products;
+  const all = await getAll('products');
   const q=(document.getElementById('prod-search')?.value||'').toLowerCase();
   const sf=document.getElementById('prod-sf')?.value||'';
   const list=all.filter(p=>p.name.toLowerCase().includes(q)&&(sf===''||p.status===sf));
@@ -679,7 +679,7 @@ function calcST(){ const q=parseFloat(document.getElementById('sm-qty').value)||
 
 async function saveSale(){
   const sel=document.getElementById('sm-product'), opt=sel.options[sel.selectedIndex];
-  const pid=parseInt(sel.value); if(!pid){ toast('Select a product.',true); return; }
+  const pid=sel.value; if(!pid){ toast('Select a product.',true); return; }
   const qty=parseFloat(document.getElementById('sm-qty').value), price=parseFloat(document.getElementById('sm-price').value);
   if(!qty||!price){ toast('Enter quantity and price.',true); return; }
   // Find product and check stock
@@ -696,7 +696,7 @@ async function saveSale(){
     const newStatus = newStock<=0?'Inactive':newStock<=low?'Low Stock':'Active';
     await dbPatchProduct(prod.id, {stock: newStock, status: newStatus});
   }
-  await dbAdd('sales',{product_id:String(pid),product_name:opt.textContent.split(' (Stock:')[0],qty,price,cost_price:parseFloat(opt.dataset.cost)||0,customer:document.getElementById('sm-customer').value.trim(),date:document.getElementById('sm-date').value||today(),notes:document.getElementById('sm-notes').value.trim()});
+  await dbAdd('sales',{product_id:pid,product_name:opt.textContent.split(' (Stock:')[0],qty,price,cost_price:parseFloat(opt.dataset.cost)||0,customer:document.getElementById('sm-customer').value.trim(),date:document.getElementById('sm-date').value||today(),notes:document.getElementById('sm-notes').value.trim()});
   toast('Sale recorded! Stock updated.'); closeM('sm'); renderSales(); updateDBBadge();
 }
 
@@ -743,7 +743,7 @@ async function saveWA(){
   const name=document.getElementById('wa-name').value.trim();
   if(!name){ toast('Enter customer name.',true); return; }
   const sel=document.getElementById('wa-product');
-  await dbAdd('whatsapp',{customer:name,message:document.getElementById('wa-msg').value.trim(),productId:parseInt(sel.value)||null,productName:sel.value?sel.options[sel.selectedIndex].textContent:'',status:document.getElementById('wa-status').value,createdAt:new Date().toISOString()});
+  await dbAdd('whatsapp',{customer:name,message:document.getElementById('wa-msg').value.trim(),product_name:sel.value?sel.options[sel.selectedIndex].textContent:'',status:document.getElementById('wa-status').value});
   toast('Log saved!'); closeM('wam'); renderWA(); updateDBBadge();
 }
 
