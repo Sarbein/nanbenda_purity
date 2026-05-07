@@ -1,0 +1,15 @@
+{
+  "name": "PURITY Barter Management",
+  "short_name": "PURITY",
+  "start_url": "./purity_nanbenda.html",
+  "display": "standalone",
+  "background_color": "#2d5a27",
+  "theme_color": "#2d5a27",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
